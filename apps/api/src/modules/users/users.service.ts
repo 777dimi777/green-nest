@@ -1,8 +1,14 @@
-import { ConflictException, Injectable } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../../database/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
-
+import { UpdateProfileDto } from './dto/update-profile.dto';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
+import { ChangePasswordDto } from './dto/change-password.dto';
 @Injectable()
 export class UsersService {
   private static readonly SALT_ROUNDS = 10;
@@ -17,9 +23,89 @@ export class UsersService {
       },
     });
   }
+async changePassword(
+  userId: string,
+  changePasswordDto: ChangePasswordDto,
+) {
+  const user = await this.prisma.user.findUnique({
+    where: {
+      id: userId,
+    },
+  });
 
+  if (!user) {
+    throw new UnauthorizedException('User not found.');
+  }
+
+  const isCurrentPasswordValid = await bcrypt.compare(
+    changePasswordDto.currentPassword,
+    user.password,
+  );
+
+  if (!isCurrentPasswordValid) {
+    throw new UnauthorizedException(
+      'Current password is incorrect.',
+    );
+  }
+
+  if (
+    changePasswordDto.newPassword !==
+    changePasswordDto.confirmPassword
+  ) {
+    throw new BadRequestException(
+      'New password and confirmation do not match.',
+    );
+  }
+
+  const isSamePassword = await bcrypt.compare(
+    changePasswordDto.newPassword,
+    user.password,
+  );
+
+  if (isSamePassword) {
+    throw new BadRequestException(
+      'New password must be different from the current password.',
+    );
+  }
+
+  const hashedPassword = await this.hashPassword(
+    changePasswordDto.newPassword,
+  );
+
+  await this.prisma.user.update({
+    where: {
+      id: userId,
+    },
+    data: {
+      password: hashedPassword,
+    },
+  });
+
+  return {
+    message: 'Password changed successfully.',
+  };
+}
   constructor(private readonly prisma: PrismaService) {}
-
+  async updateProfile(userId: string, updateProfileDto: UpdateProfileDto) {
+    return this.prisma.user.update({
+      where: {
+        id: userId,
+      },
+      data: updateProfileDto,
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        phone: true,
+        avatar: true,
+        role: true,
+        isVerified: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+  }
   async findAll() {
     return this.prisma.user.findMany();
   }
