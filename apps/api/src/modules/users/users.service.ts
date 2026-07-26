@@ -7,6 +7,17 @@ import { CreateUserDto } from './dto/create-user.dto';
 export class UsersService {
   private static readonly SALT_ROUNDS = 10;
 
+  async findById(id: string) {
+    return this.prisma.user.findUnique({
+      where: {
+        id,
+      },
+      omit: {
+        password: true,
+      },
+    });
+  }
+
   constructor(private readonly prisma: PrismaService) {}
 
   async findAll() {
@@ -16,9 +27,7 @@ export class UsersService {
   async create(createUserDto: CreateUserDto) {
     await this.checkEmailExists(createUserDto.email);
 
-    const hashedPassword = await this.hashPassword(
-      createUserDto.password,
-    );
+    const hashedPassword = await this.hashPassword(createUserDto.password);
 
     const user = await this.prisma.user.create({
       data: {

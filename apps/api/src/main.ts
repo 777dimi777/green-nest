@@ -22,8 +22,8 @@ async function bootstrap() {
     .setTitle('Green Nest API')
     .setDescription('Backend API for Green Nest e-commerce')
     .setVersion('1.0.0')
+    .addBearerAuth()
     .build();
-
   const document = SwaggerModule.createDocument(app, config);
 
   SwaggerModule.setup('api/docs', app, document);

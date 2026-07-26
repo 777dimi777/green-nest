@@ -29,16 +29,16 @@ export class AuthController {
     return this.authService.register(registerDto);
   }
   @Post('login')
-@ApiOperation({
-  summary: 'Prijava korisnika',
-})
-@ApiOkResponse({
-  description: 'Korisnik je uspešno prijavljen.',
-})
-@ApiUnauthorizedResponse({
-  description: 'Email ili lozinka nisu ispravni.',
-})
-login(@Body() loginDto: LoginDto) {
-  return this.authService.login(loginDto);
-}
+  @ApiOperation({
+    summary: 'Prijava korisnika',
+  })
+  @ApiOkResponse({
+    description: 'Korisnik je uspešno prijavljen.',
+  })
+  @ApiUnauthorizedResponse({
+    description: 'Email ili lozinka nisu ispravni.',
+  })
+  login(@Body() loginDto: LoginDto) {
+    return this.authService.login(loginDto);
+  }
 }
