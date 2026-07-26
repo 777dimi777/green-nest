@@ -12,7 +12,38 @@ import { ChangePasswordDto } from './dto/change-password.dto';
 @Injectable()
 export class UsersService {
   private static readonly SALT_ROUNDS = 10;
+async updateRefreshTokenHash(
+  userId: string,
+  hashedRefreshToken: string,
+) {
+  await this.prisma.user.update({
+    where: {
+      id: userId,
+    },
+    data: {
+      hashedRefreshToken,
+    },
+  });
+}
 
+async removeRefreshTokenHash(userId: string) {
+  await this.prisma.user.update({
+    where: {
+      id: userId,
+    },
+    data: {
+      hashedRefreshToken: null,
+    },
+  });
+}
+
+async findByIdWithRefreshToken(userId: string) {
+  return this.prisma.user.findUnique({
+    where: {
+      id: userId,
+    },
+  });
+}
   async findById(id: string) {
     return this.prisma.user.findUnique({
       where: {
@@ -23,68 +54,61 @@ export class UsersService {
       },
     });
   }
-async changePassword(
-  userId: string,
-  changePasswordDto: ChangePasswordDto,
-) {
-  const user = await this.prisma.user.findUnique({
-    where: {
-      id: userId,
-    },
-  });
+  
+  async changePassword(userId: string, changePasswordDto: ChangePasswordDto) {
+    const user = await this.prisma.user.findUnique({
+      where: {
+        id: userId,
+      },
+    });
 
-  if (!user) {
-    throw new UnauthorizedException('User not found.');
-  }
+    if (!user) {
+      throw new UnauthorizedException('User not found.');
+    }
 
-  const isCurrentPasswordValid = await bcrypt.compare(
-    changePasswordDto.currentPassword,
-    user.password,
-  );
-
-  if (!isCurrentPasswordValid) {
-    throw new UnauthorizedException(
-      'Current password is incorrect.',
+    const isCurrentPasswordValid = await bcrypt.compare(
+      changePasswordDto.currentPassword,
+      user.password,
     );
-  }
 
-  if (
-    changePasswordDto.newPassword !==
-    changePasswordDto.confirmPassword
-  ) {
-    throw new BadRequestException(
-      'New password and confirmation do not match.',
+    if (!isCurrentPasswordValid) {
+      throw new UnauthorizedException('Current password is incorrect.');
+    }
+
+    if (changePasswordDto.newPassword !== changePasswordDto.confirmPassword) {
+      throw new BadRequestException(
+        'New password and confirmation do not match.',
+      );
+    }
+
+    const isSamePassword = await bcrypt.compare(
+      changePasswordDto.newPassword,
+      user.password,
     );
-  }
 
-  const isSamePassword = await bcrypt.compare(
-    changePasswordDto.newPassword,
-    user.password,
-  );
+    if (isSamePassword) {
+      throw new BadRequestException(
+        'New password must be different from the current password.',
+      );
+    }
 
-  if (isSamePassword) {
-    throw new BadRequestException(
-      'New password must be different from the current password.',
+    const hashedPassword = await this.hashPassword(
+      changePasswordDto.newPassword,
     );
+
+    await this.prisma.user.update({
+      where: {
+        id: userId,
+      },
+      data: {
+        password: hashedPassword,
+      },
+    });
+
+    return {
+      message: 'Password changed successfully.',
+    };
   }
-
-  const hashedPassword = await this.hashPassword(
-    changePasswordDto.newPassword,
-  );
-
-  await this.prisma.user.update({
-    where: {
-      id: userId,
-    },
-    data: {
-      password: hashedPassword,
-    },
-  });
-
-  return {
-    message: 'Password changed successfully.',
-  };
-}
   constructor(private readonly prisma: PrismaService) {}
   async updateProfile(userId: string, updateProfileDto: UpdateProfileDto) {
     return this.prisma.user.update({
