@@ -2,42 +2,29 @@ import {
   Controller,
   Get,
   NotFoundException,
-  Post,
-  Body,
-  Req,
   UseGuards,
 } from '@nestjs/common';
+import { Role } from '@prisma/client';
 import {
   ApiBearerAuth,
+  ApiForbiddenResponse,
   ApiOkResponse,
   ApiOperation,
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { Request } from 'express';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { Roles } from '../auth/decorators/roles.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { AuthenticatedUser } from '../auth/interfaces/authenticated-user.interface';
-import { CreateUserDto } from './dto/create-user.dto';
+import { RolesGuard } from '../auth/guards/roles.guard';
 import { UsersService } from './users.service';
-
-type AuthenticatedRequest = Request & {
-  user: AuthenticatedUser;
-};
 
 @ApiTags('Users')
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
-
-  @Get()
-  findAll() {
-    return this.usersService.findAll();
-  }
-
-  @Post()
-  create(@Body() createUserDto: CreateUserDto) {
-    return this.usersService.create(createUserDto);
-  }
+  constructor(
+    private readonly usersService: UsersService,
+  ) {}
 
   @Get('me')
   @UseGuards(JwtAuthGuard)
@@ -51,15 +38,35 @@ export class UsersController {
   @ApiUnauthorizedResponse({
     description: 'Token nedostaje, nije validan ili je istekao.',
   })
-  async getMe(@Req() request: AuthenticatedRequest) {
-    const user = await this.usersService.findById(
-      request.user.id,
-    );
+  async getMe(
+    @CurrentUser('id') userId: string,
+  ) {
+    const user = await this.usersService.findById(userId);
 
     if (!user) {
       throw new NotFoundException('User not found.');
     }
 
     return user;
+  }
+
+  @Get()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Lista svih korisnika — samo administrator',
+  })
+  @ApiOkResponse({
+    description: 'Lista korisnika je uspešno vraćena.',
+  })
+  @ApiUnauthorizedResponse({
+    description: 'Korisnik nije prijavljen.',
+  })
+  @ApiForbiddenResponse({
+    description: 'Korisnik nema administratorska prava.',
+  })
+  findAll() {
+    return this.usersService.findAll();
   }
 }
