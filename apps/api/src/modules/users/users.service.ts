@@ -12,38 +12,35 @@ import { ChangePasswordDto } from './dto/change-password.dto';
 @Injectable()
 export class UsersService {
   private static readonly SALT_ROUNDS = 10;
-async updateRefreshTokenHash(
-  userId: string,
-  hashedRefreshToken: string,
-) {
-  await this.prisma.user.update({
-    where: {
-      id: userId,
-    },
-    data: {
-      hashedRefreshToken,
-    },
-  });
-}
+  async updateRefreshTokenHash(userId: string, hashedRefreshToken: string) {
+    await this.prisma.user.update({
+      where: {
+        id: userId,
+      },
+      data: {
+        hashedRefreshToken,
+      },
+    });
+  }
 
-async removeRefreshTokenHash(userId: string) {
-  await this.prisma.user.update({
-    where: {
-      id: userId,
-    },
-    data: {
-      hashedRefreshToken: null,
-    },
-  });
-}
+  async removeRefreshTokenHash(userId: string) {
+    await this.prisma.user.update({
+      where: {
+        id: userId,
+      },
+      data: {
+        hashedRefreshToken: null,
+      },
+    });
+  }
 
-async findByIdWithRefreshToken(userId: string) {
-  return this.prisma.user.findUnique({
-    where: {
-      id: userId,
-    },
-  });
-}
+  async findByIdWithRefreshToken(userId: string) {
+    return this.prisma.user.findUnique({
+      where: {
+        id: userId,
+      },
+    });
+  }
   async findById(id: string) {
     return this.prisma.user.findUnique({
       where: {
@@ -54,7 +51,7 @@ async findByIdWithRefreshToken(userId: string) {
       },
     });
   }
-  
+
   async changePassword(userId: string, changePasswordDto: ChangePasswordDto) {
     const user = await this.prisma.user.findUnique({
       where: {
