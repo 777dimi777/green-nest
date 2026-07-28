@@ -7,19 +7,12 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
-import {
-  ApiBearerAuth,
-  ApiOperation,
-  ApiTags,
-} from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UserRole } from '@prisma/client';
-
+import { UpdatePaymentStatusDto } from './dto/update-payment-status.dto';
 import { OrdersService } from './orders.service';
-import {
-  CreateOrderDto,
-  UpdateOrderStatusDto,
-} from './dto';
-
+import { CreateOrderDto } from './dto/create-order.dto';
+import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -32,28 +25,24 @@ import type { AuthenticatedUser } from '../auth/interfaces/authenticated-user.in
 @UseGuards(JwtAuthGuard)
 @Controller('orders')
 export class OrdersController {
-  constructor(
-    private readonly ordersService: OrdersService,
-  ) {}
+  constructor(private readonly ordersService: OrdersService) {}
 
-  @Post()
-  @ApiOperation({
-    summary: 'Kreiranje porudžbine iz korisnikove korpe',
-  })
+@Post()
 createOrder(
   @CurrentUser() user: AuthenticatedUser,
-  @Body() _createOrderDto: CreateOrderDto,
+  @Body() createOrderDto: CreateOrderDto,
 ) {
-  return this.ordersService.createOrder(user.id);
+  return this.ordersService.createOrder(
+    user.id,
+    createOrderDto.addressId,
+  );
 }
 
   @Get('my')
   @ApiOperation({
     summary: 'Pregled svih porudžbina prijavljenog korisnika',
   })
-  findMyOrders(
-    @CurrentUser() user: AuthenticatedUser,
-  ) {
+  findMyOrders(@CurrentUser() user: AuthenticatedUser) {
     return this.ordersService.findMyOrders(user.id);
   }
 
@@ -65,10 +54,7 @@ createOrder(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id') orderId: string,
   ) {
-    return this.ordersService.findMyOrderById(
-      user.id,
-      orderId,
-    );
+    return this.ordersService.findMyOrderById(user.id, orderId);
   }
 
   @Get('admin/all')
@@ -87,9 +73,7 @@ createOrder(
   @ApiOperation({
     summary: 'Admin pregled jedne porudžbine',
   })
-  findOne(
-    @Param('id') orderId: string,
-  ) {
+  findOne(@Param('id') orderId: string) {
     return this.ordersService.findOne(orderId);
   }
 
@@ -107,6 +91,21 @@ createOrder(
     return this.ordersService.updateStatus(
       orderId,
       updateOrderStatusDto.status,
+    );
+  }
+    @Patch('admin/:id/payment-status')
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({
+    summary: 'Admin promena statusa plaćanja porudžbine',
+  })
+  updatePaymentStatus(
+    @Param('id') orderId: string,
+    @Body() updatePaymentStatusDto: UpdatePaymentStatusDto,
+  ) {
+    return this.ordersService.updatePaymentStatus(
+      orderId,
+      updatePaymentStatusDto.paymentStatus,
     );
   }
 }

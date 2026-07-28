@@ -3,19 +3,25 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import {
-  OrderStatus,
-  PaymentStatus,
-  Prisma,
-} from '@prisma/client';
+import { OrderStatus, PaymentStatus, Prisma } from '@prisma/client';
 import { PrismaService } from '../../database/prisma.service';
 
 @Injectable()
 export class OrdersService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async createOrder(userId: string) {
+  async createOrder(userId: string, addressId: string) {
     return this.prisma.$transaction(async (transaction) => {
+      const address = await transaction.address.findFirst({
+        where: {
+          id: addressId,
+          userId,
+        },
+      });
+
+      if (!address) {
+        throw new NotFoundException('Izabrana adresa nije pronađena.');
+      }
       const cart = await transaction.cart.findUnique({
         where: {
           userId,
@@ -48,8 +54,7 @@ export class OrdersService {
           );
         }
 
-        const unitPrice =
-          item.product.discountPrice ?? item.product.price;
+        const unitPrice = item.product.discountPrice ?? item.product.price;
 
         const itemTotal = unitPrice.mul(item.quantity);
 
@@ -59,9 +64,7 @@ export class OrdersService {
       const shippingPrice = new Prisma.Decimal(0);
       const discount = new Prisma.Decimal(0);
 
-      const totalPrice = subtotal
-        .add(shippingPrice)
-        .sub(discount);
+      const totalPrice = subtotal.add(shippingPrice).sub(discount);
 
       const orderNumber = await this.generateOrderNumber(transaction);
 
@@ -77,14 +80,20 @@ export class OrdersService {
           totalPrice,
 
           userId,
-
+          shippingFirstName: address.firstName,
+          shippingLastName: address.lastName,
+          shippingPhone: address.phone,
+          shippingCountry: address.country,
+          shippingCity: address.city,
+          shippingPostalCode: address.postalCode,
+          shippingStreet: address.street,
+          shippingStreetNumber: address.streetNumber,
+          shippingApartment: address.apartment,
           items: {
             create: cart.items.map((item) => ({
               quantity: item.quantity,
 
-              price:
-                item.product.discountPrice ??
-                item.product.price,
+              price: item.product.discountPrice ?? item.product.price,
 
               productId: item.productId,
             })),
@@ -244,10 +253,7 @@ export class OrdersService {
     return this.formatOrder(order);
   }
 
-  async updateStatus(
-    orderId: string,
-    status: OrderStatus,
-  ) {
+  async updateStatus(orderId: string, status: OrderStatus) {
     const order = await this.prisma.order.findUnique({
       where: {
         id: orderId,
@@ -289,33 +295,70 @@ export class OrdersService {
 
     return this.formatOrder(updatedOrder);
   }
-
-  private async generateOrderNumber(
-    transaction: Prisma.TransactionClient,
+  async updatePaymentStatus(
+    orderId: string,
+    paymentStatus: PaymentStatus,
   ) {
+    const order = await this.prisma.order.findUnique({
+      where: {
+        id: orderId,
+      },
+    });
+
+    if (!order) {
+      throw new NotFoundException('Porudžbina nije pronađena.');
+    }
+
+    const updatedOrder = await this.prisma.order.update({
+      where: {
+        id: orderId,
+      },
+      data: {
+        paymentStatus,
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+          },
+        },
+        items: {
+          include: {
+            product: {
+              include: {
+                images: true,
+                category: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    return this.formatOrder(updatedOrder);
+  }
+  private async generateOrderNumber(transaction: Prisma.TransactionClient) {
     let orderNumber: string;
     let exists: boolean;
 
     do {
-      const timestamp = Date.now()
-        .toString()
-        .slice(-8);
+      const timestamp = Date.now().toString().slice(-8);
 
-      const randomPart = Math.floor(
-        1000 + Math.random() * 9000,
-      );
+      const randomPart = Math.floor(1000 + Math.random() * 9000);
 
       orderNumber = `GN-${timestamp}-${randomPart}`;
 
-      const existingOrder =
-        await transaction.order.findUnique({
-          where: {
-            orderNumber,
-          },
-          select: {
-            id: true,
-          },
-        });
+      const existingOrder = await transaction.order.findUnique({
+        where: {
+          orderNumber,
+        },
+        select: {
+          id: true,
+        },
+      });
 
       exists = existingOrder !== null;
     } while (exists);
@@ -325,32 +368,33 @@ export class OrdersService {
 
   private formatOrder(order: any) {
     return {
-      ...order,
+      id: order.id,
+      orderNumber: order.orderNumber,
+      status: order.status,
+      paymentStatus: order.paymentStatus,
+
+      user: order.user ?? undefined,
+
+      shippingAddress: {
+        firstName: order.shippingFirstName,
+        lastName: order.shippingLastName,
+        phone: order.shippingPhone,
+        country: order.shippingCountry,
+        city: order.shippingCity,
+        postalCode: order.shippingPostalCode,
+        street: order.shippingStreet,
+        streetNumber: order.shippingStreetNumber,
+        apartment: order.shippingApartment,
+      },
 
       subtotal: Number(order.subtotal),
       shippingPrice: Number(order.shippingPrice),
       discount: Number(order.discount),
       totalPrice: Number(order.totalPrice),
 
-      items: order.items.map((item: any) => ({
-        ...item,
-
-        price: Number(item.price),
-
-        itemTotal:
-          Number(item.price) * item.quantity,
-
-        product: {
-          ...item.product,
-
-          price: Number(item.product.price),
-
-          discountPrice:
-            item.product.discountPrice === null
-              ? null
-              : Number(item.product.discountPrice),
-        },
-      })),
+      items: order.items,
+      createdAt: order.createdAt,
+      updatedAt: order.updatedAt,
     };
   }
 }
