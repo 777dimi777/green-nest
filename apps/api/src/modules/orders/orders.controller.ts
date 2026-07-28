@@ -5,6 +5,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
@@ -17,7 +18,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
-
+import { OrdersQueryDto } from './dto/orders-query.dto';
 import type { AuthenticatedUser } from '../auth/interfaces/authenticated-user.interface';
 
 @ApiTags('Orders')
@@ -69,9 +70,15 @@ export class OrdersController {
   @ApiOperation({
     summary: 'Admin pregled svih porudžbina',
   })
-  findAll() {
-    return this.ordersService.findAll();
-  }
+@Get('admin/all')
+@UseGuards(RolesGuard)
+@Roles(UserRole.ADMIN)
+@ApiOperation({
+  summary: 'Admin pregled svih porudžbina',
+})
+findAll() {
+  return this.ordersService.findAll();
+}
 
   @Get('admin/:id')
   @UseGuards(RolesGuard)

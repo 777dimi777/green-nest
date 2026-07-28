@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { OrderStatus, PaymentStatus, Prisma } from '@prisma/client';
 import { PrismaService } from '../../database/prisma.service';
-
+import { OrdersQueryDto } from './dto/orders-query.dto';
 @Injectable()
 export class OrdersService {
   constructor(private readonly prisma: PrismaService) {}
@@ -247,35 +247,112 @@ export class OrdersService {
       return this.formatOrder(cancelledOrder);
     });
   }
-  async findAll() {
-    const orders = await this.prisma.order.findMany({
-      include: {
-        user: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            email: true,
+  async findAll(query: OrdersQueryDto) {
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 10;
+    const skip = (page - 1) * limit;
+
+    const where: Prisma.OrderWhereInput = {
+      ...(query.status
+        ? {
+            status: query.status,
+          }
+        : {}),
+
+      ...(query.paymentStatus
+        ? {
+            paymentStatus: query.paymentStatus,
+          }
+        : {}),
+
+      ...(query.search
+        ? {
+            OR: [
+              {
+                orderNumber: {
+                  contains: query.search,
+                  mode: 'insensitive',
+                },
+              },
+              {
+                user: {
+                  email: {
+                    contains: query.search,
+                    mode: 'insensitive',
+                  },
+                },
+              },
+              {
+                user: {
+                  firstName: {
+                    contains: query.search,
+                    mode: 'insensitive',
+                  },
+                },
+              },
+              {
+                user: {
+                  lastName: {
+                    contains: query.search,
+                    mode: 'insensitive',
+                  },
+                },
+              },
+            ],
+          }
+        : {}),
+    };
+
+    const [orders, total] = await this.prisma.$transaction([
+      this.prisma.order.findMany({
+        where,
+        include: {
+          user: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true,
+            },
           },
-        },
-        items: {
-          include: {
-            product: {
-              include: {
-                images: true,
-                category: true,
+          items: {
+            include: {
+              product: {
+                include: {
+                  images: true,
+                  category: true,
+                },
               },
             },
           },
         },
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
+        orderBy: {
+          createdAt: 'desc',
+        },
+        skip,
+        take: limit,
+      }),
 
-    return orders.map((order) => this.formatOrder(order));
+      this.prisma.order.count({
+        where,
+      }),
+    ]);
+
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      data: orders.map((order) => this.formatOrder(order)),
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+        hasPreviousPage: page > 1,
+        hasNextPage: page < totalPages,
+      },
+    };
   }
+  p;
 
   async findOne(orderId: string) {
     const order = await this.prisma.order.findUnique({
