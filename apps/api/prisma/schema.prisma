@@ -156,12 +156,17 @@ model Wishlist {
 }
 
 model Address {
-  id         String  @id @default(cuid())
-  street     String
-  city       String
-  postalCode String
-  country    String
-  isDefault  Boolean @default(false)
+  id           String  @id @default(cuid())
+  firstName    String
+  lastName     String
+  phone        String
+  country      String
+  city         String
+  postalCode   String
+  street       String
+  streetNumber String
+  apartment    String?
+  isDefault    Boolean @default(false)
 
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)

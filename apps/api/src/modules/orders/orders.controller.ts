@@ -24,7 +24,9 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
+
 import type { AuthenticatedUser } from '../auth/interfaces/authenticated-user.interface';
+
 @ApiTags('Orders')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
@@ -38,16 +40,16 @@ export class OrdersController {
   @ApiOperation({
     summary: 'Kreiranje porudžbine iz korisnikove korpe',
   })
-  createOrder(
-    @CurrentUser() user: AuthenticatedUser,
-    @Body() createOrderDto: CreateOrderDto,
-  ) {
-    return this.ordersService.createOrder(user.id);
-  }
+createOrder(
+  @CurrentUser() user: AuthenticatedUser,
+  @Body() _createOrderDto: CreateOrderDto,
+) {
+  return this.ordersService.createOrder(user.id);
+}
 
   @Get('my')
   @ApiOperation({
-    summary: 'Prikaz svih porudžbina prijavljenog korisnika',
+    summary: 'Pregled svih porudžbina prijavljenog korisnika',
   })
   findMyOrders(
     @CurrentUser() user: AuthenticatedUser,
@@ -57,7 +59,7 @@ export class OrdersController {
 
   @Get('my/:id')
   @ApiOperation({
-    summary: 'Prikaz jedne porudžbine prijavljenog korisnika',
+    summary: 'Pregled jedne porudžbine prijavljenog korisnika',
   })
   findMyOrderById(
     @CurrentUser() user: AuthenticatedUser,
@@ -73,7 +75,7 @@ export class OrdersController {
   @UseGuards(RolesGuard)
   @Roles(UserRole.ADMIN)
   @ApiOperation({
-    summary: 'Prikaz svih porudžbina za administratora',
+    summary: 'Admin pregled svih porudžbina',
   })
   findAll() {
     return this.ordersService.findAll();
@@ -83,9 +85,11 @@ export class OrdersController {
   @UseGuards(RolesGuard)
   @Roles(UserRole.ADMIN)
   @ApiOperation({
-    summary: 'Prikaz jedne porudžbine za administratora',
+    summary: 'Admin pregled jedne porudžbine',
   })
-  findOne(@Param('id') orderId: string) {
+  findOne(
+    @Param('id') orderId: string,
+  ) {
     return this.ordersService.findOne(orderId);
   }
 
@@ -93,7 +97,7 @@ export class OrdersController {
   @UseGuards(RolesGuard)
   @Roles(UserRole.ADMIN)
   @ApiOperation({
-    summary: 'Promena statusa porudžbine',
+    summary: 'Admin promena statusa porudžbine',
   })
   updateStatus(
     @Param('id') orderId: string,
