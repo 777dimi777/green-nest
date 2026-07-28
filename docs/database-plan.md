@@ -222,4 +222,4 @@ Product
 N → N Orders (through OrderItem)
 
 Order
-1 → N OrderItems
+1 → N OrderItems    

@@ -1,6 +1,4 @@
-import {
-  ApiPropertyOptional,
-} from '@nestjs/swagger';
+import { ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsBoolean,
   IsIn,
@@ -12,15 +10,11 @@ import {
   Max,
   Min,
 } from 'class-validator';
-import {
-  Transform,
-  Type,
-} from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 export class ProductsQueryDto {
   @ApiPropertyOptional({
     example: 'monstera',
-    description:
-      'Pretraga po nazivu, opisu ili SKU oznaci',
+    description: 'Pretraga po nazivu, opisu ili SKU oznaci',
   })
   @IsOptional()
   @IsString()
@@ -56,61 +50,49 @@ export class ProductsQueryDto {
 
   @ApiPropertyOptional({
     example: true,
-    description:
-      'Prikaz samo izdvojenih proizvoda',
+    description: 'Prikaz samo izdvojenih proizvoda',
   })
   @IsOptional()
   @Transform(({ value }) => {
-  if (value === 'true' || value === true) {
-    return true;
-  }
+    if (value === 'true' || value === true) {
+      return true;
+    }
 
-  if (value === 'false' || value === false) {
-    return false;
-  }
+    if (value === 'false' || value === false) {
+      return false;
+    }
 
-  return value;
-})
+    return value;
+  })
   @IsBoolean()
   featured?: boolean;
 
   @ApiPropertyOptional({
     example: true,
-    description:
-      'Prikaz samo proizvoda koji su na stanju',
+    description: 'Prikaz samo proizvoda koji su na stanju',
   })
   @IsOptional()
- @Transform(({ value }) => {
-  if (value === 'true' || value === true) {
-    return true;
-  }
+  @Transform(({ value }) => {
+    if (value === 'true' || value === true) {
+      return true;
+    }
 
-  if (value === 'false' || value === false) {
-    return false;
-  }
+    if (value === 'false' || value === false) {
+      return false;
+    }
 
-  return value;
-})
+    return value;
+  })
   @IsBoolean()
   inStock?: boolean;
 
   @ApiPropertyOptional({
     example: 'createdAt',
-    enum: [
-      'createdAt',
-      'name',
-      'price',
-      'stock',
-    ],
+    enum: ['createdAt', 'name', 'price', 'stock'],
     default: 'createdAt',
   })
   @IsOptional()
-  @IsIn([
-    'createdAt',
-    'name',
-    'price',
-    'stock',
-  ])
+  @IsIn(['createdAt', 'name', 'price', 'stock'])
   sortBy?: 'createdAt' | 'name' | 'price' | 'stock';
 
   @ApiPropertyOptional({
