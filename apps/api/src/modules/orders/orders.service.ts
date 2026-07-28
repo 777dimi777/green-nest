@@ -188,7 +188,65 @@ export class OrdersService {
 
     return this.formatOrder(order);
   }
+  async cancelMyOrder(userId: string, orderId: string) {
+    return this.prisma.$transaction(async (transaction) => {
+      const order = await transaction.order.findFirst({
+        where: {
+          id: orderId,
+          userId,
+        },
+        include: {
+          items: true,
+        },
+      });
 
+      if (!order) {
+        throw new NotFoundException('Porudžbina nije pronađena.');
+      }
+
+      if (order.status !== OrderStatus.PENDING) {
+        throw new BadRequestException(
+          'Možete otkazati samo porudžbinu koja je na čekanju.',
+        );
+      }
+
+      for (const item of order.items) {
+        await transaction.product.update({
+          where: {
+            id: item.productId,
+          },
+          data: {
+            stock: {
+              increment: item.quantity,
+            },
+          },
+        });
+      }
+
+      const cancelledOrder = await transaction.order.update({
+        where: {
+          id: orderId,
+        },
+        data: {
+          status: OrderStatus.CANCELLED,
+        },
+        include: {
+          items: {
+            include: {
+              product: {
+                include: {
+                  images: true,
+                  category: true,
+                },
+              },
+            },
+          },
+        },
+      });
+
+      return this.formatOrder(cancelledOrder);
+    });
+  }
   async findAll() {
     const orders = await this.prisma.order.findMany({
       include: {
@@ -295,10 +353,7 @@ export class OrdersService {
 
     return this.formatOrder(updatedOrder);
   }
-  async updatePaymentStatus(
-    orderId: string,
-    paymentStatus: PaymentStatus,
-  ) {
+  async updatePaymentStatus(orderId: string, paymentStatus: PaymentStatus) {
     const order = await this.prisma.order.findUnique({
       where: {
         id: orderId,
@@ -339,6 +394,85 @@ export class OrdersService {
     });
 
     return this.formatOrder(updatedOrder);
+  }
+  async cancelOrder(orderId: string) {
+    return this.prisma.$transaction(async (transaction) => {
+      const order = await transaction.order.findUnique({
+        where: {
+          id: orderId,
+        },
+        include: {
+          items: true,
+        },
+      });
+
+      if (!order) {
+        throw new NotFoundException('Porudžbina nije pronađena.');
+      }
+
+      if (order.status === OrderStatus.CANCELLED) {
+        throw new BadRequestException('Porudžbina je već otkazana.');
+      }
+
+      if (
+        order.status === OrderStatus.SHIPPED ||
+        order.status === OrderStatus.DELIVERED
+      ) {
+        throw new BadRequestException(
+          'Poslata ili isporučena porudžbina ne može biti otkazana.',
+        );
+      }
+
+      for (const item of order.items) {
+        await transaction.product.update({
+          where: {
+            id: item.productId,
+          },
+          data: {
+            stock: {
+              increment: item.quantity,
+            },
+          },
+        });
+      }
+
+      const paymentStatus =
+        order.paymentStatus === PaymentStatus.PAID
+          ? PaymentStatus.REFUNDED
+          : order.paymentStatus;
+
+      const cancelledOrder = await transaction.order.update({
+        where: {
+          id: orderId,
+        },
+        data: {
+          status: OrderStatus.CANCELLED,
+          paymentStatus,
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true,
+            },
+          },
+          items: {
+            include: {
+              product: {
+                include: {
+                  images: true,
+                  category: true,
+                },
+              },
+            },
+          },
+        },
+      });
+
+      return this.formatOrder(cancelledOrder);
+    });
   }
   private async generateOrderNumber(transaction: Prisma.TransactionClient) {
     let orderNumber: string;

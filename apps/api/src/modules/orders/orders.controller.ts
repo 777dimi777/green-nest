@@ -27,16 +27,13 @@ import type { AuthenticatedUser } from '../auth/interfaces/authenticated-user.in
 export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
 
-@Post()
-createOrder(
-  @CurrentUser() user: AuthenticatedUser,
-  @Body() createOrderDto: CreateOrderDto,
-) {
-  return this.ordersService.createOrder(
-    user.id,
-    createOrderDto.addressId,
-  );
-}
+  @Post()
+  createOrder(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() createOrderDto: CreateOrderDto,
+  ) {
+    return this.ordersService.createOrder(user.id, createOrderDto.addressId);
+  }
 
   @Get('my')
   @ApiOperation({
@@ -56,7 +53,16 @@ createOrder(
   ) {
     return this.ordersService.findMyOrderById(user.id, orderId);
   }
-
+  @Patch('my/:id/cancel')
+  @ApiOperation({
+    summary: 'Otkazivanje porudžbine prijavljenog korisnika',
+  })
+  cancelMyOrder(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') orderId: string,
+  ) {
+    return this.ordersService.cancelMyOrder(user.id, orderId);
+  }
   @Get('admin/all')
   @UseGuards(RolesGuard)
   @Roles(UserRole.ADMIN)
@@ -93,7 +99,7 @@ createOrder(
       updateOrderStatusDto.status,
     );
   }
-    @Patch('admin/:id/payment-status')
+  @Patch('admin/:id/payment-status')
   @UseGuards(RolesGuard)
   @Roles(UserRole.ADMIN)
   @ApiOperation({
@@ -107,5 +113,14 @@ createOrder(
       orderId,
       updatePaymentStatusDto.paymentStatus,
     );
+  }
+  @Patch('admin/:id/cancel')
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({
+    summary: 'Admin otkazivanje porudžbine',
+  })
+  cancelOrder(@Param('id') orderId: string) {
+    return this.ordersService.cancelOrder(orderId);
   }
 }
