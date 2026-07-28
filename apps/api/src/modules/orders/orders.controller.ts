@@ -68,17 +68,11 @@ export class OrdersController {
   @UseGuards(RolesGuard)
   @Roles(UserRole.ADMIN)
   @ApiOperation({
-    summary: 'Admin pregled svih porudžbina',
+    summary: 'Admin pregled svih porudžbina sa filterima i paginacijom',
   })
-@Get('admin/all')
-@UseGuards(RolesGuard)
-@Roles(UserRole.ADMIN)
-@ApiOperation({
-  summary: 'Admin pregled svih porudžbina',
-})
-findAll() {
-  return this.ordersService.findAll();
-}
+  findAll(@Query() query: OrdersQueryDto) {
+    return this.ordersService.findAll(query);
+  }
 
   @Get('admin/:id')
   @UseGuards(RolesGuard)

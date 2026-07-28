@@ -387,7 +387,6 @@ export class OrdersService {
 
     return this.formatOrder(order);
   }
-
   async updateStatus(orderId: string, status: OrderStatus) {
     const order = await this.prisma.order.findUnique({
       where: {
@@ -397,6 +396,35 @@ export class OrdersService {
 
     if (!order) {
       throw new NotFoundException('Porudžbina nije pronađena.');
+    }
+
+    if (order.status === status) {
+      throw new BadRequestException(`Porudžbina već ima status ${status}.`);
+    }
+const allowedTransitions: Record<OrderStatus, OrderStatus[]> = {
+  [OrderStatus.PENDING]: [
+    OrderStatus.CONFIRMED,
+  ],
+
+  [OrderStatus.CONFIRMED]: [
+    OrderStatus.SHIPPED,
+  ],
+
+  [OrderStatus.SHIPPED]: [
+    OrderStatus.DELIVERED,
+  ],
+
+  [OrderStatus.DELIVERED]: [],
+
+  [OrderStatus.CANCELLED]: [],
+};
+
+    const allowedStatuses = allowedTransitions[order.status];
+
+    if (!allowedStatuses.includes(status)) {
+      throw new BadRequestException(
+        `Promena statusa iz ${order.status} u ${status} nije dozvoljena.`,
+      );
     }
 
     const updatedOrder = await this.prisma.order.update({
