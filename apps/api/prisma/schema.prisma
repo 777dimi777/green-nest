@@ -24,6 +24,7 @@ enum PaymentStatus {
   PENDING
   PAID
   FAILED
+  REFUNDED
 }
 
 model User {
