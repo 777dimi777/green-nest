@@ -8,7 +8,10 @@ import {
   UseGuards,
   Delete,
   Patch,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import {
   ApiBearerAuth,
   ApiCreatedResponse,
@@ -20,6 +23,8 @@ import {
   ApiUnauthorizedResponse,
   ApiConflictResponse,
   ApiBadRequestResponse,
+  ApiBody,
+  ApiConsumes,
 } from '@nestjs/swagger';
 import { UserRole } from '@prisma/client';
 
@@ -33,6 +38,8 @@ import { ProductsQueryDto } from './dto/products-query.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { UpdateProductStockDto } from './dto/update-product-stock.dto';
 import { UpdateProductPublishDto } from './dto/update-product-publish.dto';
+import { UploadProductImageDto } from './dto/upload-product-image.dto';
+import { productImageUploadOptions } from './product-upload.config';
 @ApiTags('Products')
 @Controller('products')
 export class ProductsController {
@@ -170,6 +177,81 @@ export class ProductsController {
   })
   updateStock(@Param('id') id: string, @Body() dto: UpdateProductStockDto) {
     return this.productsService.updateStock(id, dto.stock);
+  }
+
+  @Post(':id/images')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiBearerAuth()
+  @UseInterceptors(FileInterceptor('file', productImageUploadOptions))
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({ summary: 'Upload a product image' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['file'],
+      properties: {
+        file: {
+          type: 'string',
+          format: 'binary',
+          description: 'JPEG, PNG or WebP image, maximum 5 MB.',
+        },
+        isPrimary: {
+          type: 'boolean',
+          default: false,
+        },
+      },
+    },
+  })
+  @ApiCreatedResponse({ description: 'Product image uploaded successfully.' })
+  @ApiBadRequestResponse({
+    description: 'The file is missing, invalid or larger than 5 MB.',
+  })
+  @ApiUnauthorizedResponse({ description: 'Access token is invalid.' })
+  @ApiForbiddenResponse({ description: 'Administrator access is required.' })
+  @ApiNotFoundResponse({ description: 'Product does not exist.' })
+  uploadImage(
+    @Param('id') id: string,
+    @UploadedFile() file: Express.Multer.File | undefined,
+    @Body() dto: UploadProductImageDto,
+  ) {
+    return this.productsService.uploadImage(id, file, dto.isPrimary);
+  }
+
+  @Delete(':productId/images/:imageId')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Delete a product image' })
+  @ApiOkResponse({ description: 'Product image deleted successfully.' })
+  @ApiUnauthorizedResponse({ description: 'Access token is invalid.' })
+  @ApiForbiddenResponse({ description: 'Administrator access is required.' })
+  @ApiNotFoundResponse({
+    description: 'Image does not exist for the selected product.',
+  })
+  removeImage(
+    @Param('productId') productId: string,
+    @Param('imageId') imageId: string,
+  ) {
+    return this.productsService.removeImage(productId, imageId);
+  }
+
+  @Patch(':productId/images/:imageId/primary')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Set the primary product image' })
+  @ApiOkResponse({ description: 'Primary product image updated.' })
+  @ApiUnauthorizedResponse({ description: 'Access token is invalid.' })
+  @ApiForbiddenResponse({ description: 'Administrator access is required.' })
+  @ApiNotFoundResponse({
+    description: 'Image does not exist for the selected product.',
+  })
+  setPrimaryImage(
+    @Param('productId') productId: string,
+    @Param('imageId') imageId: string,
+  ) {
+    return this.productsService.setPrimaryImage(productId, imageId);
   }
 
   @Delete(':id')

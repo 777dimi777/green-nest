@@ -4,10 +4,16 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { unlink } from 'fs/promises';
+import { basename, resolve, sep } from 'path';
 import { PrismaService } from '../../database/prisma.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { ProductsQueryDto } from './dto/products-query.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
+import {
+  PRODUCT_UPLOAD_DIRECTORY,
+  PRODUCT_UPLOAD_URL_PREFIX,
+} from './product-upload.config';
 @Injectable()
 export class ProductsService {
   constructor(private readonly prisma: PrismaService) {}
@@ -391,6 +397,11 @@ export class ProductsService {
         id,
       },
       include: {
+        images: {
+          select: {
+            url: true,
+          },
+        },
         _count: {
           select: {
             orderItems: true,
@@ -415,6 +426,10 @@ export class ProductsService {
       },
     });
 
+    await Promise.all(
+      product.images.map((image) => this.deleteLocalImageFile(image.url)),
+    );
+
     return {
       message: 'Product deleted successfully.',
     };
@@ -438,6 +453,143 @@ export class ProductsService {
     });
   }
 
+  async uploadImage(
+    productId: string,
+    file: Express.Multer.File | undefined,
+    requestedPrimary?: boolean,
+  ) {
+    if (!file) {
+      throw new BadRequestException('Image file is required.');
+    }
+
+    const imageUrl = `${PRODUCT_UPLOAD_URL_PREFIX}${file.filename}`;
+
+    try {
+      return await this.prisma.$transaction(async (tx) => {
+        const product = await tx.product.findUnique({
+          where: { id: productId },
+          select: {
+            id: true,
+            _count: {
+              select: { images: true },
+            },
+          },
+        });
+
+        if (!product) {
+          throw new NotFoundException('Product not found.');
+        }
+
+        const isPrimary =
+          product._count.images === 0 || requestedPrimary === true;
+
+        if (isPrimary) {
+          await tx.productImage.updateMany({
+            where: { productId },
+            data: { isPrimary: false },
+          });
+        }
+
+        return tx.productImage.create({
+          data: {
+            productId,
+            url: imageUrl,
+            isPrimary,
+          },
+        });
+      });
+    } catch (error) {
+      await this.deleteLocalImageFile(imageUrl);
+      throw error;
+    }
+  }
+
+  async removeImage(productId: string, imageId: string) {
+    const result = await this.prisma.$transaction(async (tx) => {
+      const image = await tx.productImage.findFirst({
+        where: {
+          id: imageId,
+          productId,
+        },
+      });
+
+      if (!image) {
+        throw new NotFoundException(
+          'Image not found for the selected product.',
+        );
+      }
+
+      await tx.productImage.delete({
+        where: { id: imageId },
+      });
+
+      if (image.isPrimary) {
+        const replacement = await tx.productImage.findFirst({
+          where: { productId },
+          orderBy: { createdAt: 'asc' },
+          select: { id: true },
+        });
+
+        if (replacement) {
+          await tx.productImage.update({
+            where: { id: replacement.id },
+            data: { isPrimary: true },
+          });
+        }
+      }
+
+      const images = await tx.productImage.findMany({
+        where: { productId },
+        orderBy: [{ isPrimary: 'desc' }, { createdAt: 'asc' }],
+      });
+
+      return {
+        deletedImageUrl: image.url,
+        images,
+      };
+    });
+
+    await this.deleteLocalImageFile(result.deletedImageUrl);
+
+    return {
+      message: 'Product image deleted successfully.',
+      images: result.images,
+    };
+  }
+
+  async setPrimaryImage(productId: string, imageId: string) {
+    return this.prisma.$transaction(async (tx) => {
+      const image = await tx.productImage.findFirst({
+        where: {
+          id: imageId,
+          productId,
+        },
+        select: { id: true },
+      });
+
+      if (!image) {
+        throw new NotFoundException(
+          'Image not found for the selected product.',
+        );
+      }
+
+      await tx.productImage.updateMany({
+        where: { productId },
+        data: { isPrimary: false },
+      });
+
+      await tx.productImage.update({
+        where: { id: imageId },
+        data: { isPrimary: true },
+      });
+
+      return tx.productImage.findMany({
+        where: { productId },
+        orderBy: [{ isPrimary: 'desc' }, { createdAt: 'asc' }],
+      });
+    });
+  }
+
   private async ensureProductExists(id: string) {
     const product = await this.prisma.product.findUnique({
       where: { id },
@@ -446,6 +598,43 @@ export class ProductsService {
     if (!product) {
       throw new NotFoundException('Product not found.');
     }
+  }
+
+  private async deleteLocalImageFile(imageUrl: string) {
+    const filePath = this.getLocalImageFilePath(imageUrl);
+
+    if (!filePath) {
+      return;
+    }
+
+    try {
+      await unlink(filePath);
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
+        // File cleanup is best-effort after the database operation succeeds.
+      }
+    }
+  }
+
+  private getLocalImageFilePath(imageUrl: string) {
+    if (!imageUrl.startsWith(PRODUCT_UPLOAD_URL_PREFIX)) {
+      return null;
+    }
+
+    const fileName = imageUrl.slice(PRODUCT_UPLOAD_URL_PREFIX.length);
+
+    if (!fileName || basename(fileName) !== fileName) {
+      return null;
+    }
+
+    const uploadDirectory = resolve(PRODUCT_UPLOAD_DIRECTORY);
+    const filePath = resolve(uploadDirectory, fileName);
+
+    if (!filePath.startsWith(`${uploadDirectory}${sep}`)) {
+      return null;
+    }
+
+    return filePath;
   }
 
   private async ensureCategoryExists(categoryId: string) {
