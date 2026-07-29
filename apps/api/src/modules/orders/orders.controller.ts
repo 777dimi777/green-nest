@@ -33,7 +33,11 @@ export class OrdersController {
     @CurrentUser() user: AuthenticatedUser,
     @Body() createOrderDto: CreateOrderDto,
   ) {
-    return this.ordersService.createOrder(user.id, createOrderDto.addressId);
+    return this.ordersService.createOrder(
+      user.id,
+      createOrderDto.addressId,
+      createOrderDto.couponCode,
+    );
   }
 
   @Get('my')

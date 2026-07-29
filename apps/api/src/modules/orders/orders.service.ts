@@ -6,11 +6,15 @@ import {
 import { OrderStatus, PaymentStatus, Prisma } from '@prisma/client';
 import { PrismaService } from '../../database/prisma.service';
 import { OrdersQueryDto } from './dto/orders-query.dto';
+import { CouponsService } from '../coupons/coupons.service';
 @Injectable()
 export class OrdersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly couponsService: CouponsService,
+  ) {}
 
-  async createOrder(userId: string, addressId: string) {
+  async createOrder(userId: string, addressId: string, couponCode?: string) {
     return this.prisma.$transaction(async (transaction) => {
       const address = await transaction.address.findFirst({
         where: {
@@ -62,7 +66,21 @@ export class OrdersService {
       }
 
       const shippingPrice = new Prisma.Decimal(0);
-      const discount = new Prisma.Decimal(0);
+      let discount = new Prisma.Decimal(0);
+      let couponId: string | undefined;
+      let validatedCoupon:
+        Awaited<ReturnType<CouponsService['validateCoupon']>> | undefined;
+
+      if (couponCode) {
+        validatedCoupon = await this.couponsService.validateCoupon(
+          userId,
+          couponCode,
+          subtotal,
+          transaction,
+        );
+        discount = validatedCoupon.discount;
+        couponId = validatedCoupon.coupon.id;
+      }
 
       const totalPrice = subtotal.add(shippingPrice).sub(discount);
 
@@ -78,6 +96,7 @@ export class OrdersService {
           shippingPrice,
           discount,
           totalPrice,
+          couponId,
 
           userId,
           shippingFirstName: address.firstName,
@@ -132,6 +151,14 @@ export class OrdersService {
           cartId: cart.id,
         },
       });
+
+      if (validatedCoupon) {
+        await this.couponsService.markCouponAsUsed(
+          userId,
+          validatedCoupon.coupon,
+          transaction,
+        );
+      }
 
       return this.formatOrder(order);
     });
@@ -401,23 +428,17 @@ export class OrdersService {
     if (order.status === status) {
       throw new BadRequestException(`Porudžbina već ima status ${status}.`);
     }
-const allowedTransitions: Record<OrderStatus, OrderStatus[]> = {
-  [OrderStatus.PENDING]: [
-    OrderStatus.CONFIRMED,
-  ],
+    const allowedTransitions: Record<OrderStatus, OrderStatus[]> = {
+      [OrderStatus.PENDING]: [OrderStatus.CONFIRMED],
 
-  [OrderStatus.CONFIRMED]: [
-    OrderStatus.SHIPPED,
-  ],
+      [OrderStatus.CONFIRMED]: [OrderStatus.SHIPPED],
 
-  [OrderStatus.SHIPPED]: [
-    OrderStatus.DELIVERED,
-  ],
+      [OrderStatus.SHIPPED]: [OrderStatus.DELIVERED],
 
-  [OrderStatus.DELIVERED]: [],
+      [OrderStatus.DELIVERED]: [],
 
-  [OrderStatus.CANCELLED]: [],
-};
+      [OrderStatus.CANCELLED]: [],
+    };
 
     const allowedStatuses = allowedTransitions[order.status];
 
