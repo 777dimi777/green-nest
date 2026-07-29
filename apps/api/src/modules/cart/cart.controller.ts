@@ -8,11 +8,7 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
-import {
-  ApiBearerAuth,
-  ApiOperation,
-  ApiTags,
-} from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import { CartService } from './cart.service';
 import { AddCartItemDto } from './dto/add-cart-item.dto';
@@ -34,9 +30,7 @@ export class CartController {
   @ApiOperation({
     summary: 'Pregled korpe prijavljenog korisnika',
   })
-  findCart(
-    @CurrentUser() user: AuthenticatedUser,
-  ) {
+  findCart(@CurrentUser() user: AuthenticatedUser) {
     return this.cartService.findCart(user.id);
   }
 
@@ -48,10 +42,7 @@ export class CartController {
     @CurrentUser() user: AuthenticatedUser,
     @Body() addCartItemDto: AddCartItemDto,
   ) {
-    return this.cartService.addItem(
-      user.id,
-      addCartItemDto,
-    );
+    return this.cartService.addItem(user.id, addCartItemDto);
   }
 
   @Patch('items/:productId')
@@ -63,11 +54,7 @@ export class CartController {
     @Param('productId') productId: string,
     @Body() updateCartItemDto: UpdateCartItemDto,
   ) {
-    return this.cartService.updateItem(
-      user.id,
-      productId,
-      updateCartItemDto,
-    );
+    return this.cartService.updateItem(user.id, productId, updateCartItemDto);
   }
 
   @Delete('items/:productId')
@@ -78,19 +65,14 @@ export class CartController {
     @CurrentUser() user: AuthenticatedUser,
     @Param('productId') productId: string,
   ) {
-    return this.cartService.removeItem(
-      user.id,
-      productId,
-    );
+    return this.cartService.removeItem(user.id, productId);
   }
 
   @Delete()
   @ApiOperation({
     summary: 'Pražnjenje cele korpe',
   })
-  clear(
-    @CurrentUser() user: AuthenticatedUser,
-  ) {
+  clear(@CurrentUser() user: AuthenticatedUser) {
     return this.cartService.clear(user.id);
   }
 }

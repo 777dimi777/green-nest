@@ -1,7 +1,4 @@
-import {
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { UserRole } from '@prisma/client';
@@ -27,14 +24,10 @@ export class AuthService {
   }
 
   async login(loginDto: LoginDto) {
-    const user = await this.usersService.findByEmail(
-      loginDto.email,
-    );
+    const user = await this.usersService.findByEmail(loginDto.email);
 
     if (!user) {
-      throw new UnauthorizedException(
-        'Invalid email or password.',
-      );
+      throw new UnauthorizedException('Invalid email or password.');
     }
 
     const isPasswordValid = await bcrypt.compare(
@@ -43,23 +36,16 @@ export class AuthService {
     );
 
     if (!isPasswordValid) {
-      throw new UnauthorizedException(
-        'Invalid email or password.',
-      );
+      throw new UnauthorizedException('Invalid email or password.');
     }
 
-    const tokens = await this.generateTokens(
-      user.id,
-      user.email,
-      user.role,
-    );
+    const tokens = await this.generateTokens(user.id, user.email, user.role);
 
-    await this.storeRefreshTokenHash(
-      user.id,
-      tokens.refreshToken,
-    );
+    await this.storeRefreshTokenHash(user.id, tokens.refreshToken);
 
     const { password, hashedRefreshToken, ...safeUser } = user;
+    void password;
+    void hashedRefreshToken;
 
     return {
       ...tokens,
@@ -67,17 +53,11 @@ export class AuthService {
     };
   }
 
-  async refreshTokens(
-    userId: string,
-    refreshToken: string,
-  ) {
-    const user =
-      await this.usersService.findByIdWithRefreshToken(userId);
+  async refreshTokens(userId: string, refreshToken: string) {
+    const user = await this.usersService.findByIdWithRefreshToken(userId);
 
     if (!user || !user.hashedRefreshToken) {
-      throw new UnauthorizedException(
-        'Access denied.',
-      );
+      throw new UnauthorizedException('Access denied.');
     }
 
     const refreshTokenMatches = await bcrypt.compare(
@@ -86,21 +66,12 @@ export class AuthService {
     );
 
     if (!refreshTokenMatches) {
-      throw new UnauthorizedException(
-        'Access denied.',
-      );
+      throw new UnauthorizedException('Access denied.');
     }
 
-    const tokens = await this.generateTokens(
-      user.id,
-      user.email,
-      user.role,
-    );
+    const tokens = await this.generateTokens(user.id, user.email, user.role);
 
-    await this.storeRefreshTokenHash(
-      user.id,
-      tokens.refreshToken,
-    );
+    await this.storeRefreshTokenHash(user.id, tokens.refreshToken);
 
     return tokens;
   }
@@ -113,44 +84,26 @@ export class AuthService {
     };
   }
 
-  private async generateTokens(
-    userId: string,
-    email: string,
-    role: UserRole,
-  ) {
+  private async generateTokens(userId: string, email: string, role: UserRole) {
     const payload: JwtPayload = {
       sub: userId,
       email,
       role,
     };
 
-    const accessToken = await this.jwtService.signAsync(
-      payload,
-      {
-        secret:
-          this.configService.getOrThrow<string>(
-            'JWT_SECRET',
-          ),
-        expiresIn:
-          this.configService.getOrThrow<string>(
-            'JWT_EXPIRES_IN',
-          ) as StringValue,
-      },
-    );
+    const accessToken = await this.jwtService.signAsync(payload, {
+      secret: this.configService.getOrThrow<string>('JWT_SECRET'),
+      expiresIn: this.configService.getOrThrow<string>(
+        'JWT_EXPIRES_IN',
+      ) as StringValue,
+    });
 
-    const refreshToken = await this.jwtService.signAsync(
-      payload,
-      {
-        secret:
-          this.configService.getOrThrow<string>(
-            'JWT_REFRESH_SECRET',
-          ),
-        expiresIn:
-          this.configService.getOrThrow<string>(
-            'JWT_REFRESH_EXPIRES_IN',
-          ) as StringValue,
-      },
-    );
+    const refreshToken = await this.jwtService.signAsync(payload, {
+      secret: this.configService.getOrThrow<string>('JWT_REFRESH_SECRET'),
+      expiresIn: this.configService.getOrThrow<string>(
+        'JWT_REFRESH_EXPIRES_IN',
+      ) as StringValue,
+    });
 
     return {
       accessToken,
@@ -158,18 +111,12 @@ export class AuthService {
     };
   }
 
-  private async storeRefreshTokenHash(
-    userId: string,
-    refreshToken: string,
-  ) {
+  private async storeRefreshTokenHash(userId: string, refreshToken: string) {
     const hashedRefreshToken = await bcrypt.hash(
       refreshToken,
       AuthService.REFRESH_TOKEN_SALT_ROUNDS,
     );
 
-    await this.usersService.updateRefreshTokenHash(
-      userId,
-      hashedRefreshToken,
-    );
+    await this.usersService.updateRefreshTokenHash(userId, hashedRefreshToken);
   }
 }

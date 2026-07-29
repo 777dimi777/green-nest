@@ -26,7 +26,7 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import type { AuthenticatedUser } from '../auth/interfaces/authenticated-user.interface';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { PaymentsQueryDto } from './dto/payments-query.dto';
-import { UpdatePaymentStatusDto } from './dto/update-payment-status.dto';
+import { UpdatePaymentTransactionStatusDto } from './dto/update-payment-transaction-status.dto';
 import { PaymentsService } from './payments.service';
 
 @ApiTags('Payments')
@@ -96,7 +96,7 @@ export class PaymentsController {
   @ApiNotFoundResponse({ description: 'Plaćanje nije pronađeno.' })
   updateStatus(
     @Param('id') paymentId: string,
-    @Body() dto: UpdatePaymentStatusDto,
+    @Body() dto: UpdatePaymentTransactionStatusDto,
   ) {
     return this.paymentsService.updateStatus(paymentId, dto);
   }

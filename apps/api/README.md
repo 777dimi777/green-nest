@@ -1,98 +1,158 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Green Nest API
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Green Nest API is the NestJS backend for an e-commerce application focused on
+ornamental plants. It provides JWT authentication, role-based administration,
+catalog management, shopping and checkout workflows, payments, notifications,
+analytics, local product image uploads, and operational health checks.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Technology
 
-## Description
+- NestJS 11 and TypeScript
+- Prisma ORM and PostgreSQL
+- JWT access and refresh tokens with Passport
+- Swagger/OpenAPI
+- class-validator and class-transformer
+- Multer local image storage
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## Modules
 
-## Project setup
+`auth`, `users`, `categories`, `products`, `wishlist`, `reviews`, `cart`,
+`addresses`, `orders`, `coupons`, `payments`, `notifications`, `analytics`, and
+`health`.
 
-```bash
-$ npm install
-```
+## Prerequisites
 
-## Compile and run the project
+- Node.js 20 or newer
+- npm
+- PostgreSQL 16, locally or through Docker
+
+## Installation
+
+From `apps/api`:
 
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+npm install
+copy .env.example .env
 ```
 
-## Run tests
+On macOS or Linux, replace the second command with `cp .env.example .env`.
+Replace all example JWT secrets before using a shared or production environment.
+
+## Environment configuration
+
+| Variable                 | Purpose                                   | Example                                                                 |
+| ------------------------ | ----------------------------------------- | ----------------------------------------------------------------------- |
+| `DATABASE_URL`           | PostgreSQL connection URL                 | `postgresql://postgres:postgres@localhost:5433/greennest?schema=public` |
+| `JWT_SECRET`             | Access-token signing secret               | long random value                                                       |
+| `JWT_EXPIRES_IN`         | Access-token lifetime                     | `15m`                                                                   |
+| `JWT_REFRESH_SECRET`     | Refresh-token signing secret              | different long random value                                             |
+| `JWT_REFRESH_EXPIRES_IN` | Refresh-token lifetime                    | `7d`                                                                    |
+| `PORT`                   | API port                                  | `3001`                                                                  |
+| `CORS_ORIGIN`            | Allowed frontend origins, comma-separated | `http://localhost:3000`                                                 |
+
+Configuration is validated during application startup. The API refuses to start
+when a required value is missing or `PORT` is invalid.
+
+## PostgreSQL with Docker
+
+The repository root contains `docker-compose.yml`. From `apps/api`, start only
+PostgreSQL with:
 
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+docker compose -f ../../docker-compose.yml up -d postgres
 ```
 
-## Deployment
+The provided development database is exposed on port `5433`. Production
+credentials must be supplied separately and must not reuse the Docker examples.
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+## Prisma
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+npx prisma generate
+npx prisma validate
+npx prisma migrate dev
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+For an existing production database, apply committed migrations without creating
+or resetting data:
 
-## Resources
+```bash
+npx prisma migrate deploy
+```
 
-Check out a few resources that may come in handy when working with NestJS:
+No Prisma seed command is currently configured.
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+## Running the API
 
-## Support
+```bash
+# Development with watch mode
+npm run start:dev
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+# Compile
+npm run build
 
-## Stay in touch
+# Run compiled production output
+npm run start:prod
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+# Lint and tests
+npm run lint
+npm test
+```
 
-## License
+Default development URLs:
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+- API base: `http://localhost:3001/api`
+- Swagger: `http://localhost:3001/api/docs`
+- Health check: `http://localhost:3001/api/health`
+- Uploaded image: `http://localhost:3001/uploads/products/<filename>`
+
+## Authentication and authorization
+
+Register or log in through `/api/auth`, then send the access token as:
+
+```http
+Authorization: Bearer <access-token>
+```
+
+New users receive the `CUSTOMER` role. Administrative endpoints require the
+`ADMIN` role and are protected by JWT and role guards. Assign administrator
+access only through a trusted administrative process.
+
+## Endpoint groups
+
+- `/api/auth` — registration, login, refresh, logout
+- `/api/users` — profile and administrator user management
+- `/api/categories`, `/api/products` — catalog and product images
+- `/api/wishlist`, `/api/reviews`, `/api/cart`, `/api/addresses` — customer data
+- `/api/orders`, `/api/coupons`, `/api/payments` — checkout and payment workflow
+- `/api/notifications` — customer notifications
+- `/api/analytics` — administrator reporting
+- `/api/health` — public API and database readiness check
+
+Swagger contains the exact methods, DTO schemas, parameters, authorization
+requirements, and response descriptions.
+
+## Product uploads
+
+Product images are stored in `uploads/products`. Accepted types are JPEG, PNG,
+and WebP, with a 5 MB maximum per file. The directory must be writable by the
+application process. Uploaded files are runtime data and are intentionally
+excluded from Git; only `.gitkeep` is tracked.
+
+For multi-instance or ephemeral deployments, replace local storage with durable
+shared object storage before scaling the API horizontally.
+
+## Troubleshooting
+
+- **Database connection fails:** confirm `DATABASE_URL`, Docker status, port
+  `5433`, database name, and credentials.
+- **Prisma client is missing or outdated:** run `npx prisma generate`.
+- **Tables or columns are missing:** run `npx prisma migrate dev` locally or
+  `npx prisma migrate deploy` in production.
+- **Port is already occupied:** stop the other process or change `PORT`.
+- **Uploads fail:** ensure `uploads/products` exists and the process has write
+  permission; do not remove its `.gitkeep`.
+- **Startup configuration error:** compare `.env` with `.env.example`.
+
+Never commit `.env`, real secrets, database credentials, or uploaded product
+images.

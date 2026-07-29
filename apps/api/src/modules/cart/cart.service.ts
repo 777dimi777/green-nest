@@ -4,7 +4,6 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
-import { Prisma } from '@prisma/client';
 import { AddCartItemDto } from './dto/add-cart-item.dto';
 import { UpdateCartItemDto } from './dto/update-cart-item.dto';
 
@@ -287,7 +286,7 @@ export class CartService {
         images: Array<{
           id: string;
           url: string;
-         alt: string | null;
+          alt: string | null;
           isPrimary: boolean;
           productId: string;
           createdAt: Date;

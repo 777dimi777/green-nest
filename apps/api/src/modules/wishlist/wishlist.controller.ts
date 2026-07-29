@@ -26,9 +26,7 @@ import { WishlistService } from './wishlist.service';
 @UseGuards(JwtAuthGuard)
 @Controller('wishlist')
 export class WishlistController {
-  constructor(
-    private readonly wishlistService: WishlistService,
-  ) {}
+  constructor(private readonly wishlistService: WishlistService) {}
 
   @Get()
   @ApiOperation({
@@ -37,12 +35,10 @@ export class WishlistController {
       'Returns all products saved in the currently authenticated user wishlist.',
   })
   @ApiOkResponse({
-    description:
-      'Wishlist returned successfully.',
+    description: 'Wishlist returned successfully.',
   })
   @ApiUnauthorizedResponse({
-    description:
-      'Access token is missing or invalid.',
+    description: 'Access token is missing or invalid.',
   })
   findAll(
     @CurrentUser('id')
@@ -58,12 +54,10 @@ export class WishlistController {
       'Checks whether the current user has already saved the selected product.',
   })
   @ApiOkResponse({
-    description:
-      'Wishlist status returned successfully.',
+    description: 'Wishlist status returned successfully.',
   })
   @ApiUnauthorizedResponse({
-    description:
-      'Access token is missing or invalid.',
+    description: 'Access token is missing or invalid.',
   })
   check(
     @CurrentUser('id')
@@ -72,33 +66,25 @@ export class WishlistController {
     @Param('productId')
     productId: string,
   ) {
-    return this.wishlistService.check(
-      userId,
-      productId,
-    );
+    return this.wishlistService.check(userId, productId);
   }
 
   @Post(':productId')
   @ApiOperation({
     summary: 'Add product to wishlist',
-    description:
-      'Adds a published product to the current user wishlist.',
+    description: 'Adds a published product to the current user wishlist.',
   })
   @ApiOkResponse({
-    description:
-      'Product added to wishlist successfully.',
+    description: 'Product added to wishlist successfully.',
   })
   @ApiUnauthorizedResponse({
-    description:
-      'Access token is missing or invalid.',
+    description: 'Access token is missing or invalid.',
   })
   @ApiNotFoundResponse({
-    description:
-      'Selected product does not exist or is not published.',
+    description: 'Selected product does not exist or is not published.',
   })
   @ApiConflictResponse({
-    description:
-      'Product is already in the wishlist.',
+    description: 'Product is already in the wishlist.',
   })
   add(
     @CurrentUser('id')
@@ -107,25 +93,19 @@ export class WishlistController {
     @Param('productId')
     productId: string,
   ) {
-    return this.wishlistService.add(
-      userId,
-      productId,
-    );
+    return this.wishlistService.add(userId, productId);
   }
 
   @Delete('clear')
   @ApiOperation({
     summary: 'Clear wishlist',
-    description:
-      'Removes every product from the current user wishlist.',
+    description: 'Removes every product from the current user wishlist.',
   })
   @ApiOkResponse({
-    description:
-      'Wishlist cleared successfully.',
+    description: 'Wishlist cleared successfully.',
   })
   @ApiUnauthorizedResponse({
-    description:
-      'Access token is missing or invalid.',
+    description: 'Access token is missing or invalid.',
   })
   clear(
     @CurrentUser('id')
@@ -137,20 +117,16 @@ export class WishlistController {
   @Delete(':productId')
   @ApiOperation({
     summary: 'Remove product from wishlist',
-    description:
-      'Removes one selected product from the current user wishlist.',
+    description: 'Removes one selected product from the current user wishlist.',
   })
   @ApiOkResponse({
-    description:
-      'Product removed from wishlist successfully.',
+    description: 'Product removed from wishlist successfully.',
   })
   @ApiUnauthorizedResponse({
-    description:
-      'Access token is missing or invalid.',
+    description: 'Access token is missing or invalid.',
   })
   @ApiNotFoundResponse({
-    description:
-      'Product is not in the current user wishlist.',
+    description: 'Product is not in the current user wishlist.',
   })
   remove(
     @CurrentUser('id')
@@ -159,9 +135,6 @@ export class WishlistController {
     @Param('productId')
     productId: string,
   ) {
-    return this.wishlistService.remove(
-      userId,
-      productId,
-    );
+    return this.wishlistService.remove(userId, productId);
   }
 }

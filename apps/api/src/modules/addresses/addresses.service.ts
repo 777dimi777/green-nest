@@ -1,33 +1,20 @@
-import {
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
-import {
-  CreateAddressDto,
-  UpdateAddressDto,
-} from './dto';
+import { CreateAddressDto, UpdateAddressDto } from './dto';
 
 @Injectable()
 export class AddressesService {
-  constructor(
-    private readonly prisma: PrismaService,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
-  async create(
-    userId: string,
-    createAddressDto: CreateAddressDto,
-  ) {
-    const addressCount =
-      await this.prisma.address.count({
-        where: {
-          userId,
-        },
-      });
+  async create(userId: string, createAddressDto: CreateAddressDto) {
+    const addressCount = await this.prisma.address.count({
+      where: {
+        userId,
+      },
+    });
 
     const shouldBeDefault =
-      addressCount === 0 ||
-      createAddressDto.isDefault === true;
+      addressCount === 0 || createAddressDto.isDefault === true;
 
     return this.prisma.$transaction(async (tx) => {
       if (shouldBeDefault) {
@@ -51,10 +38,8 @@ export class AddressesService {
           city: createAddressDto.city,
           postalCode: createAddressDto.postalCode,
           street: createAddressDto.street,
-          streetNumber:
-            createAddressDto.streetNumber,
-          apartment:
-            createAddressDto.apartment,
+          streetNumber: createAddressDto.streetNumber,
+          apartment: createAddressDto.apartment,
           isDefault: shouldBeDefault,
           userId,
         },
@@ -78,22 +63,16 @@ export class AddressesService {
     });
   }
 
-  async findOne(
-    userId: string,
-    addressId: string,
-  ) {
-    const address =
-      await this.prisma.address.findFirst({
-        where: {
-          id: addressId,
-          userId,
-        },
-      });
+  async findOne(userId: string, addressId: string) {
+    const address = await this.prisma.address.findFirst({
+      where: {
+        id: addressId,
+        userId,
+      },
+    });
 
     if (!address) {
-      throw new NotFoundException(
-        'Adresa nije pronađena.',
-      );
+      throw new NotFoundException('Adresa nije pronađena.');
     }
 
     return address;
@@ -104,10 +83,7 @@ export class AddressesService {
     addressId: string,
     updateAddressDto: UpdateAddressDto,
   ) {
-    const address = await this.findOne(
-      userId,
-      addressId,
-    );
+    const address = await this.findOne(userId, addressId);
 
     return this.prisma.$transaction(async (tx) => {
       if (updateAddressDto.isDefault === true) {
@@ -134,14 +110,8 @@ export class AddressesService {
     });
   }
 
-  async remove(
-    userId: string,
-    addressId: string,
-  ) {
-    const address = await this.findOne(
-      userId,
-      addressId,
-    );
+  async remove(userId: string, addressId: string) {
+    const address = await this.findOne(userId, addressId);
 
     await this.prisma.$transaction(async (tx) => {
       await tx.address.delete({
@@ -151,15 +121,14 @@ export class AddressesService {
       });
 
       if (address.isDefault) {
-        const nextAddress =
-          await tx.address.findFirst({
-            where: {
-              userId,
-            },
-            orderBy: {
-              createdAt: 'asc',
-            },
-          });
+        const nextAddress = await tx.address.findFirst({
+          where: {
+            userId,
+          },
+          orderBy: {
+            createdAt: 'asc',
+          },
+        });
 
         if (nextAddress) {
           await tx.address.update({

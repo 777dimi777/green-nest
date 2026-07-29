@@ -16,7 +16,7 @@ import { randomUUID } from 'crypto';
 import { PrismaService } from '../../database/prisma.service';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { PaymentsQueryDto } from './dto/payments-query.dto';
-import { UpdatePaymentStatusDto } from './dto/update-payment-status.dto';
+import { UpdatePaymentTransactionStatusDto } from './dto/update-payment-transaction-status.dto';
 import { NotificationsService } from '../notifications/notifications.service';
 
 const paymentOrderSelect = {
@@ -319,7 +319,10 @@ export class PaymentsService {
     return payment;
   }
 
-  async updateStatus(paymentId: string, dto: UpdatePaymentStatusDto) {
+  async updateStatus(
+    paymentId: string,
+    dto: UpdatePaymentTransactionStatusDto,
+  ) {
     try {
       return await this.runSerializable(async (transaction) => {
         const payment = await transaction.payment.findUnique({

@@ -8,17 +8,10 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
-import {
-  ApiBearerAuth,
-  ApiOperation,
-  ApiTags,
-} from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import { AddressesService } from './addresses.service';
-import {
-  CreateAddressDto,
-  UpdateAddressDto,
-} from './dto';
+import { CreateAddressDto, UpdateAddressDto } from './dto';
 
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
@@ -30,9 +23,7 @@ import type { AuthenticatedUser } from '../auth/interfaces/authenticated-user.in
 @UseGuards(JwtAuthGuard)
 @Controller('addresses')
 export class AddressesController {
-  constructor(
-    private readonly addressesService: AddressesService,
-  ) {}
+  constructor(private readonly addressesService: AddressesService) {}
 
   @Post()
   @ApiOperation({
@@ -42,19 +33,14 @@ export class AddressesController {
     @CurrentUser() user: AuthenticatedUser,
     @Body() createAddressDto: CreateAddressDto,
   ) {
-    return this.addressesService.create(
-      user.id,
-      createAddressDto,
-    );
+    return this.addressesService.create(user.id, createAddressDto);
   }
 
   @Get()
   @ApiOperation({
     summary: 'Pregled svih adresa prijavljenog korisnika',
   })
-  findAll(
-    @CurrentUser() user: AuthenticatedUser,
-  ) {
+  findAll(@CurrentUser() user: AuthenticatedUser) {
     return this.addressesService.findAll(user.id);
   }
 
@@ -66,10 +52,7 @@ export class AddressesController {
     @CurrentUser() user: AuthenticatedUser,
     @Param('id') addressId: string,
   ) {
-    return this.addressesService.findOne(
-      user.id,
-      addressId,
-    );
+    return this.addressesService.findOne(user.id, addressId);
   }
 
   @Patch(':id')
@@ -81,11 +64,7 @@ export class AddressesController {
     @Param('id') addressId: string,
     @Body() updateAddressDto: UpdateAddressDto,
   ) {
-    return this.addressesService.update(
-      user.id,
-      addressId,
-      updateAddressDto,
-    );
+    return this.addressesService.update(user.id, addressId, updateAddressDto);
   }
 
   @Delete(':id')
@@ -96,9 +75,6 @@ export class AddressesController {
     @CurrentUser() user: AuthenticatedUser,
     @Param('id') addressId: string,
   ) {
-    return this.addressesService.remove(
-      user.id,
-      addressId,
-    );
+    return this.addressesService.remove(user.id, addressId);
   }
 }

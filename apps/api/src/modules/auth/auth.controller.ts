@@ -1,7 +1,6 @@
 import {
   Body,
   Controller,
-  Get,
   HttpCode,
   HttpStatus,
   Post,
@@ -16,6 +15,7 @@ import {
   ApiUnauthorizedResponse,
   ApiBearerAuth,
 } from '@nestjs/swagger';
+import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -29,6 +29,8 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('register')
+  @UseGuards(ThrottlerGuard)
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @ApiOperation({
     summary: 'Registracija novog korisnika',
   })
@@ -42,6 +44,8 @@ export class AuthController {
     return this.authService.register(registerDto);
   }
   @Post('login')
+  @UseGuards(ThrottlerGuard)
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @ApiOperation({
     summary: 'Prijava korisnika',
   })
@@ -55,46 +59,39 @@ export class AuthController {
     return this.authService.login(loginDto);
   }
   @Post('refresh')
-@UseGuards(JwtRefreshAuthGuard)
-@HttpCode(HttpStatus.OK)
-@ApiBearerAuth()
-@ApiOperation({
-  summary: 'Izdavanje novih access i refresh tokena',
-})
-@ApiOkResponse({
-  description: 'Novi tokeni su uspešno izdati.',
-})
-@ApiUnauthorizedResponse({
-  description:
-    'Refresh token nije validan ili je istekao.',
-})
-refresh(
-  @CurrentUser()
-  user: RefreshAuthenticatedUser,
-) {
-  return this.authService.refreshTokens(
-    user.id,
-    user.refreshToken,
-  );
-}
+  @UseGuards(JwtRefreshAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Izdavanje novih access i refresh tokena',
+  })
+  @ApiOkResponse({
+    description: 'Novi tokeni su uspešno izdati.',
+  })
+  @ApiUnauthorizedResponse({
+    description: 'Refresh token nije validan ili je istekao.',
+  })
+  refresh(
+    @CurrentUser()
+    user: RefreshAuthenticatedUser,
+  ) {
+    return this.authService.refreshTokens(user.id, user.refreshToken);
+  }
 
-@Post('logout')
-@UseGuards(JwtAuthGuard)
-@HttpCode(HttpStatus.OK)
-@ApiBearerAuth()
-@ApiOperation({
-  summary: 'Odjava trenutno prijavljenog korisnika',
-})
-@ApiOkResponse({
-  description: 'Korisnik je uspešno odjavljen.',
-})
-@ApiUnauthorizedResponse({
-  description:
-    'Access token nije validan ili je istekao.',
-})
-logout(
-  @CurrentUser('id') userId: string,
-) {
-  return this.authService.logout(userId);
-}
+  @Post('logout')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Odjava trenutno prijavljenog korisnika',
+  })
+  @ApiOkResponse({
+    description: 'Korisnik je uspešno odjavljen.',
+  })
+  @ApiUnauthorizedResponse({
+    description: 'Access token nije validan ili je istekao.',
+  })
+  logout(@CurrentUser('id') userId: string) {
+    return this.authService.logout(userId);
+  }
 }

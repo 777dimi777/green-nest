@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { PaymentTransactionStatus } from '@prisma/client';
 import { IsEnum } from 'class-validator';
 
-export class UpdatePaymentStatusDto {
+export class UpdatePaymentTransactionStatusDto {
   @ApiProperty({
     enum: PaymentTransactionStatus,
     example: PaymentTransactionStatus.COMPLETED,
