@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -25,13 +26,28 @@ import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { ReviewsService } from './reviews.service';
 import { CreateReviewDto } from './dto/create-review.dto';
 import { UpdateReviewDto } from './dto/update-review.dto';
+import { ReviewsQueryDto } from './dto/reviews-query.dto';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { UserRole } from '@prisma/client';
+import type { AuthenticatedUser } from '../auth/interfaces/authenticated-user.interface';
 
 @ApiTags('Reviews')
 @Controller('reviews')
 export class ReviewsController {
-  constructor(
-    private readonly reviewsService: ReviewsService,
-  ) {}
+  constructor(private readonly reviewsService: ReviewsService) {}
+
+  @Get()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Admin pregled svih recenzija' })
+  @ApiOkResponse({ description: 'Paginirana lista recenzija.' })
+  @ApiUnauthorizedResponse({ description: 'Korisnik nije prijavljen.' })
+  @ApiForbiddenResponse({ description: 'Potreban je ADMIN pristup.' })
+  findAll(@Query() query: ReviewsQueryDto) {
+    return this.reviewsService.findAll(query);
+  }
 
   @Get('product/:productId')
   @ApiOperation({
@@ -40,38 +56,31 @@ export class ReviewsController {
       'Returns all reviews, the average rating and the total number of reviews for one published product.',
   })
   @ApiOkResponse({
-    description:
-      'Product reviews returned successfully.',
+    description: 'Product reviews returned successfully.',
   })
   @ApiNotFoundResponse({
-    description:
-      'Product does not exist or is not published.',
+    description: 'Product does not exist or is not published.',
   })
   findByProduct(
     @Param('productId')
     productId: string,
   ) {
-    return this.reviewsService.findByProduct(
-      productId,
-    );
+    return this.reviewsService.findByProduct(productId);
   }
 
   @Get('my-review/:productId')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({
-    summary:
-      'Get current user review for a product',
+    summary: 'Get current user review for a product',
     description:
       'Checks whether the authenticated user has already reviewed the selected product.',
   })
   @ApiOkResponse({
-    description:
-      'Current user review status returned successfully.',
+    description: 'Current user review status returned successfully.',
   })
   @ApiUnauthorizedResponse({
-    description:
-      'Access token is missing or invalid.',
+    description: 'Access token is missing or invalid.',
   })
   findMyReview(
     @CurrentUser('id')
@@ -80,10 +89,7 @@ export class ReviewsController {
     @Param('productId')
     productId: string,
   ) {
-    return this.reviewsService.findMyReview(
-      userId,
-      productId,
-    );
+    return this.reviewsService.findMyReview(userId, productId);
   }
 
   @Post('product/:productId')
@@ -95,20 +101,16 @@ export class ReviewsController {
       'Allows an authenticated user to create one review for a published product.',
   })
   @ApiOkResponse({
-    description:
-      'Review created successfully.',
+    description: 'Review created successfully.',
   })
   @ApiUnauthorizedResponse({
-    description:
-      'Access token is missing or invalid.',
+    description: 'Access token is missing or invalid.',
   })
   @ApiNotFoundResponse({
-    description:
-      'Product does not exist or is not published.',
+    description: 'Product does not exist or is not published.',
   })
   @ApiConflictResponse({
-    description:
-      'The current user has already reviewed this product.',
+    description: 'The current user has already reviewed this product.',
   })
   create(
     @CurrentUser('id')
@@ -120,11 +122,7 @@ export class ReviewsController {
     @Body()
     createReviewDto: CreateReviewDto,
   ) {
-    return this.reviewsService.create(
-      userId,
-      productId,
-      createReviewDto,
-    );
+    return this.reviewsService.create(userId, productId, createReviewDto);
   }
 
   @Patch(':reviewId')
@@ -136,20 +134,16 @@ export class ReviewsController {
       'Allows the authenticated user to update only their own review.',
   })
   @ApiOkResponse({
-    description:
-      'Review updated successfully.',
+    description: 'Review updated successfully.',
   })
   @ApiUnauthorizedResponse({
-    description:
-      'Access token is missing or invalid.',
+    description: 'Access token is missing or invalid.',
   })
   @ApiForbiddenResponse({
-    description:
-      'The review belongs to another user.',
+    description: 'The review belongs to another user.',
   })
   @ApiNotFoundResponse({
-    description:
-      'Review does not exist.',
+    description: 'Review does not exist.',
   })
   update(
     @CurrentUser('id')
@@ -161,47 +155,40 @@ export class ReviewsController {
     @Body()
     updateReviewDto: UpdateReviewDto,
   ) {
-    return this.reviewsService.update(
-      userId,
-      reviewId,
-      updateReviewDto,
-    );
+    return this.reviewsService.update(userId, reviewId, updateReviewDto);
   }
 
   @Delete(':reviewId')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({
-    summary: 'Delete own review',
+    summary: 'Delete own review or any review as administrator',
     description:
-      'Allows the authenticated user to delete only their own review.',
+      'Customers may delete only their own review; administrators may delete any review.',
   })
   @ApiOkResponse({
-    description:
-      'Review deleted successfully.',
+    description: 'Review deleted successfully.',
   })
   @ApiUnauthorizedResponse({
-    description:
-      'Access token is missing or invalid.',
+    description: 'Access token is missing or invalid.',
   })
   @ApiForbiddenResponse({
-    description:
-      'The review belongs to another user.',
+    description: 'The review belongs to another user.',
   })
   @ApiNotFoundResponse({
-    description:
-      'Review does not exist.',
+    description: 'Review does not exist.',
   })
   remove(
-    @CurrentUser('id')
-    userId: string,
+    @CurrentUser()
+    user: AuthenticatedUser,
 
     @Param('reviewId')
     reviewId: string,
   ) {
     return this.reviewsService.remove(
-      userId,
+      user.id,
       reviewId,
+      user.role === UserRole.ADMIN,
     );
   }
 }

@@ -6,9 +6,12 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { OrderStatus, PaymentStatus, Prisma, UserRole } from '@prisma/client';
+import { UsersQueryDto } from './dto/users-query.dto';
 @Injectable()
 export class UsersService {
   private static readonly SALT_ROUNDS = 10;
@@ -127,8 +130,190 @@ export class UsersService {
       },
     });
   }
-  async findAll() {
-    return this.prisma.user.findMany();
+  async findAll(query: UsersQueryDto) {
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 10;
+    const where: Prisma.UserWhereInput = {
+      ...(query.role && { role: query.role }),
+      ...(query.search && {
+        OR: [
+          {
+            email: {
+              contains: query.search,
+              mode: 'insensitive',
+            },
+          },
+          {
+            firstName: {
+              contains: query.search,
+              mode: 'insensitive',
+            },
+          },
+          {
+            lastName: {
+              contains: query.search,
+              mode: 'insensitive',
+            },
+          },
+        ],
+      }),
+    };
+    const [users, total] = await this.prisma.$transaction([
+      this.prisma.user.findMany({
+        where,
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          phone: true,
+          avatar: true,
+          role: true,
+          isVerified: true,
+          createdAt: true,
+          updatedAt: true,
+          _count: {
+            select: {
+              orders: true,
+              reviews: true,
+              wishlist: true,
+            },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      this.prisma.user.count({ where }),
+    ]);
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      data: users,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+        hasPreviousPage: page > 1,
+        hasNextPage: page < totalPages,
+      },
+    };
+  }
+
+  async findAdminById(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        phone: true,
+        avatar: true,
+        role: true,
+        isVerified: true,
+        createdAt: true,
+        updatedAt: true,
+        _count: {
+          select: {
+            orders: true,
+            reviews: true,
+            wishlist: true,
+          },
+        },
+      },
+    });
+    if (!user) {
+      throw new NotFoundException('Korisnik nije pronađen.');
+    }
+    const spent = await this.prisma.order.aggregate({
+      where: {
+        userId,
+        paymentStatus: PaymentStatus.PAID,
+        status: { not: OrderStatus.CANCELLED },
+      },
+      _sum: { totalPrice: true },
+    });
+
+    return {
+      ...user,
+      statistics: {
+        orders: user._count.orders,
+        reviews: user._count.reviews,
+        wishlistItems: user._count.wishlist,
+        totalSpent: Number(
+          (spent._sum.totalPrice ?? new Prisma.Decimal(0)).toFixed(2),
+        ),
+      },
+    };
+  }
+
+  async updateRole(currentAdminId: string, userId: string, role: UserRole) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+    if (!user) {
+      throw new NotFoundException('Korisnik nije pronađen.');
+    }
+    if (
+      currentAdminId === userId &&
+      user.role === UserRole.ADMIN &&
+      role !== UserRole.ADMIN
+    ) {
+      const administratorCount = await this.prisma.user.count({
+        where: { role: UserRole.ADMIN },
+      });
+      if (administratorCount <= 1) {
+        throw new ConflictException(
+          'Jedini administrator ne može ukloniti sopstvenu ADMIN rolu.',
+        );
+      }
+    }
+
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: { role },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        role: true,
+        updatedAt: true,
+      },
+    });
+  }
+
+  async remove(currentAdminId: string, userId: string) {
+    if (currentAdminId === userId) {
+      throw new ConflictException(
+        'Administrator ne može obrisati sopstveni nalog.',
+      );
+    }
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true },
+    });
+    if (!user) {
+      throw new NotFoundException('Korisnik nije pronađen.');
+    }
+
+    try {
+      await this.prisma.user.delete({ where: { id: userId } });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2003'
+      ) {
+        throw new ConflictException(
+          'Korisnik ne može biti obrisan jer ima povezanu poslovnu istoriju.',
+        );
+      }
+      throw error;
+    }
+
+    return { message: 'Korisnik je uspešno obrisan.' };
   }
 
   async create(createUserDto: CreateUserDto) {
@@ -136,16 +321,24 @@ export class UsersService {
 
     const hashedPassword = await this.hashPassword(createUserDto.password);
 
-    const user = await this.prisma.user.create({
+    return this.prisma.user.create({
       data: {
         ...createUserDto,
         password: hashedPassword,
       },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        phone: true,
+        avatar: true,
+        role: true,
+        isVerified: true,
+        createdAt: true,
+        updatedAt: true,
+      },
     });
-
-    const { password, ...userWithoutPassword } = user;
-
-    return userWithoutPassword;
   }
 
   async findByEmail(email: string) {

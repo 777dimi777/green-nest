@@ -8,7 +8,15 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBadRequestResponse,
+  ApiBearerAuth,
+  ApiForbiddenResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+  ApiUnauthorizedResponse,
+} from '@nestjs/swagger';
 import { UserRole } from '@prisma/client';
 import { UpdatePaymentStatusDto } from './dto/update-payment-status.dto';
 import { OrdersService } from './orders.service';
@@ -71,6 +79,10 @@ export class OrdersController {
   @Get('admin/all')
   @UseGuards(RolesGuard)
   @Roles(UserRole.ADMIN)
+  @ApiOkResponse({ description: 'Paginirana lista porudžbina.' })
+  @ApiBadRequestResponse({ description: 'Neispravan datumski opseg.' })
+  @ApiUnauthorizedResponse({ description: 'Korisnik nije prijavljen.' })
+  @ApiForbiddenResponse({ description: 'Potreban je ADMIN pristup.' })
   @ApiOperation({
     summary: 'Admin pregled svih porudžbina sa filterima i paginacijom',
   })

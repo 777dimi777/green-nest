@@ -7,6 +7,7 @@ import {
 import { PrismaService } from '../../database/prisma.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class CategoriesService {
@@ -18,17 +19,20 @@ export class CategoriesService {
     await this.ensureSlugIsUnique(slug);
 
     if (createCategoryDto.parentId) {
-      await this.ensureParentExists(
-        createCategoryDto.parentId,
-      );
+      await this.ensureParentExists(createCategoryDto.parentId);
     }
 
-    return this.prisma.category.create({
-      data: {
-        ...createCategoryDto,
-        slug,
-      },
-    });
+    try {
+      return await this.prisma.category.create({
+        data: {
+          ...createCategoryDto,
+          slug,
+        },
+      });
+    } catch (error) {
+      this.rethrowCategoryConstraint(error);
+      throw error;
+    }
   }
 
   async findAll() {
@@ -48,44 +52,37 @@ export class CategoriesService {
   }
 
   async findBySlug(slug: string) {
-    const category =
-      await this.prisma.category.findUnique({
-        where: {
-          slug,
-        },
-        include: {
-          parent: true,
-          children: true,
-          products: {
-            where: {
-              published: true,
-            },
-            include: {
-              images: {
-                where: {
-                  isPrimary: true,
-                },
+    const category = await this.prisma.category.findUnique({
+      where: {
+        slug,
+      },
+      include: {
+        parent: true,
+        children: true,
+        products: {
+          where: {
+            published: true,
+          },
+          include: {
+            images: {
+              where: {
+                isPrimary: true,
               },
             },
           },
         },
-      });
+      },
+    });
 
     if (!category) {
-      throw new NotFoundException(
-        'Category not found.',
-      );
+      throw new NotFoundException('Category not found.');
     }
 
     return category;
   }
 
-  async update(
-    categoryId: string,
-    updateCategoryDto: UpdateCategoryDto,
-  ) {
-    const existingCategory =
-      await this.findById(categoryId);
+  async update(categoryId: string, updateCategoryDto: UpdateCategoryDto) {
+    const existingCategory = await this.findById(categoryId);
 
     let slug = existingCategory.slug;
 
@@ -95,33 +92,31 @@ export class CategoriesService {
     ) {
       slug = this.createSlug(updateCategoryDto.name);
 
-      await this.ensureSlugIsUnique(
-        slug,
-        categoryId,
-      );
+      await this.ensureSlugIsUnique(slug, categoryId);
     }
 
     if (updateCategoryDto.parentId) {
       if (updateCategoryDto.parentId === categoryId) {
-        throw new BadRequestException(
-          'Category cannot be its own parent.',
-        );
+        throw new BadRequestException('Category cannot be its own parent.');
       }
 
-      await this.ensureParentExists(
-        updateCategoryDto.parentId,
-      );
+      await this.ensureParentExists(updateCategoryDto.parentId);
     }
 
-    return this.prisma.category.update({
-      where: {
-        id: categoryId,
-      },
-      data: {
-        ...updateCategoryDto,
-        slug,
-      },
-    });
+    try {
+      return await this.prisma.category.update({
+        where: {
+          id: categoryId,
+        },
+        data: {
+          ...updateCategoryDto,
+          slug,
+        },
+      });
+    } catch (error) {
+      this.rethrowCategoryConstraint(error);
+      throw error;
+    }
   }
 
   async remove(categoryId: string) {
@@ -140,9 +135,7 @@ export class CategoriesService {
     });
 
     if (!category) {
-      throw new NotFoundException(
-        'Category not found.',
-      );
+      throw new NotFoundException('Category not found.');
     }
 
     if (category._count.products > 0) {
@@ -157,11 +150,16 @@ export class CategoriesService {
       );
     }
 
-    await this.prisma.category.delete({
-      where: {
-        id: categoryId,
-      },
-    });
+    try {
+      await this.prisma.category.delete({
+        where: {
+          id: categoryId,
+        },
+      });
+    } catch (error) {
+      this.rethrowCategoryConstraint(error);
+      throw error;
+    }
 
     return {
       message: 'Category deleted successfully.',
@@ -169,55 +167,40 @@ export class CategoriesService {
   }
 
   private async findById(categoryId: string) {
-    const category =
-      await this.prisma.category.findUnique({
-        where: {
-          id: categoryId,
-        },
-      });
+    const category = await this.prisma.category.findUnique({
+      where: {
+        id: categoryId,
+      },
+    });
 
     if (!category) {
-      throw new NotFoundException(
-        'Category not found.',
-      );
+      throw new NotFoundException('Category not found.');
     }
 
     return category;
   }
 
-  private async ensureSlugIsUnique(
-    slug: string,
-    ignoredCategoryId?: string,
-  ) {
-    const existingCategory =
-      await this.prisma.category.findUnique({
-        where: {
-          slug,
-        },
-      });
+  private async ensureSlugIsUnique(slug: string, ignoredCategoryId?: string) {
+    const existingCategory = await this.prisma.category.findUnique({
+      where: {
+        slug,
+      },
+    });
 
-    if (
-      existingCategory &&
-      existingCategory.id !== ignoredCategoryId
-    ) {
-      throw new ConflictException(
-        'Category with this name already exists.',
-      );
+    if (existingCategory && existingCategory.id !== ignoredCategoryId) {
+      throw new ConflictException('Category with this name already exists.');
     }
   }
 
   private async ensureParentExists(parentId: string) {
-    const parent =
-      await this.prisma.category.findUnique({
-        where: {
-          id: parentId,
-        },
-      });
+    const parent = await this.prisma.category.findUnique({
+      where: {
+        id: parentId,
+      },
+    });
 
     if (!parent) {
-      throw new BadRequestException(
-        'Parent category does not exist.',
-      );
+      throw new BadRequestException('Parent category does not exist.');
     }
   }
 
@@ -231,5 +214,20 @@ export class CategoriesService {
       .trim()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-+|-+$/g, '');
+  }
+
+  private rethrowCategoryConstraint(error: unknown): void {
+    if (!(error instanceof Prisma.PrismaClientKnownRequestError)) return;
+    if (error.code === 'P2002') {
+      throw new ConflictException('Kategorija sa ovim nazivom već postoji.');
+    }
+    if (error.code === 'P2003') {
+      throw new ConflictException(
+        'Kategorija ne može biti obrisana jer ima povezane podatke.',
+      );
+    }
+    if (error.code === 'P2025') {
+      throw new NotFoundException('Kategorija nije pronađena.');
+    }
   }
 }

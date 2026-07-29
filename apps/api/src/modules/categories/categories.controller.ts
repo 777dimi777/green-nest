@@ -17,7 +17,6 @@ import {
   ApiConflictResponse,
   ApiCreatedResponse,
   ApiForbiddenResponse,
-  ApiNoContentResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
@@ -34,9 +33,7 @@ import { UpdateCategoryDto } from './dto/update-category.dto';
 @ApiTags('Categories')
 @Controller('categories')
 export class CategoriesController {
-  constructor(
-    private readonly categoriesService: CategoriesService,
-  ) {}
+  constructor(private readonly categoriesService: CategoriesService) {}
 
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -49,8 +46,7 @@ export class CategoriesController {
     description: 'Kategorija je uspešno kreirana.',
   })
   @ApiBadRequestResponse({
-    description:
-      'Podaci nisu validni ili roditeljska kategorija ne postoji.',
+    description: 'Podaci nisu validni ili roditeljska kategorija ne postoji.',
   })
   @ApiConflictResponse({
     description: 'Kategorija sa ovim nazivom već postoji.',
@@ -61,12 +57,8 @@ export class CategoriesController {
   @ApiForbiddenResponse({
     description: 'Korisnik nema administratorska prava.',
   })
-  create(
-    @Body() createCategoryDto: CreateCategoryDto,
-  ) {
-    return this.categoriesService.create(
-      createCategoryDto,
-    );
+  create(@Body() createCategoryDto: CreateCategoryDto) {
+    return this.categoriesService.create(createCategoryDto);
   }
 
   @Get()
@@ -117,10 +109,7 @@ export class CategoriesController {
     @Param('id') categoryId: string,
     @Body() updateCategoryDto: UpdateCategoryDto,
   ) {
-    return this.categoriesService.update(
-      categoryId,
-      updateCategoryDto,
-    );
+    return this.categoriesService.update(categoryId, updateCategoryDto);
   }
 
   @Delete(':id')
@@ -135,8 +124,7 @@ export class CategoriesController {
     description: 'Kategorija je uspešno obrisana.',
   })
   @ApiBadRequestResponse({
-    description:
-      'Kategorija sadrži proizvode ili potkategorije.',
+    description: 'Kategorija sadrži proizvode ili potkategorije.',
   })
   @ApiNotFoundResponse({
     description: 'Kategorija nije pronađena.',

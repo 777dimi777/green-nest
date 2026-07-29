@@ -10,7 +10,7 @@ import {
   Max,
   Min,
 } from 'class-validator';
-import { Transform, Type } from 'class-transformer';
+import { Transform, TransformFnParams, Type } from 'class-transformer';
 export class ProductsQueryDto {
   @ApiPropertyOptional({
     example: 'monstera',
@@ -53,7 +53,7 @@ export class ProductsQueryDto {
     description: 'Prikaz samo izdvojenih proizvoda',
   })
   @IsOptional()
-  @Transform(({ value }) => {
+  @Transform(({ value }: TransformFnParams): unknown => {
     if (value === 'true' || value === true) {
       return true;
     }
@@ -72,7 +72,7 @@ export class ProductsQueryDto {
     description: 'Prikaz samo proizvoda koji su na stanju',
   })
   @IsOptional()
-  @Transform(({ value }) => {
+  @Transform(({ value }: TransformFnParams): unknown => {
     if (value === 'true' || value === true) {
       return true;
     }

@@ -19,6 +19,7 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
   ApiConflictResponse,
+  ApiBadRequestResponse,
 } from '@nestjs/swagger';
 import { UserRole } from '@prisma/client';
 
@@ -30,6 +31,8 @@ import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { ProductsQueryDto } from './dto/products-query.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
+import { UpdateProductStockDto } from './dto/update-product-stock.dto';
+import { UpdateProductPublishDto } from './dto/update-product-publish.dto';
 @ApiTags('Products')
 @Controller('products')
 export class ProductsController {
@@ -135,6 +138,38 @@ export class ProductsController {
     updateProductDto: UpdateProductDto,
   ) {
     return this.productsService.update(id, updateProductDto);
+  }
+
+  @Patch(':id/publish')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Publish or unpublish a product' })
+  @ApiOkResponse({ description: 'Published status updated successfully.' })
+  @ApiUnauthorizedResponse({ description: 'Access token is invalid.' })
+  @ApiForbiddenResponse({ description: 'Administrator access is required.' })
+  @ApiNotFoundResponse({ description: 'Product does not exist.' })
+  updatePublished(
+    @Param('id') id: string,
+    @Body() dto: UpdateProductPublishDto,
+  ) {
+    return this.productsService.updatePublished(id, dto.published);
+  }
+
+  @Patch(':id/stock')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Set current product stock' })
+  @ApiOkResponse({ description: 'Stock updated successfully.' })
+  @ApiUnauthorizedResponse({ description: 'Access token is invalid.' })
+  @ApiForbiddenResponse({ description: 'Administrator access is required.' })
+  @ApiNotFoundResponse({ description: 'Product does not exist.' })
+  @ApiBadRequestResponse({
+    description: 'Stock must be a non-negative integer.',
+  })
+  updateStock(@Param('id') id: string, @Body() dto: UpdateProductStockDto) {
+    return this.productsService.updateStock(id, dto.stock);
   }
 
   @Delete(':id')

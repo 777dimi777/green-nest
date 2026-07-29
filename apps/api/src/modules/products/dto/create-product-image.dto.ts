@@ -1,7 +1,4 @@
-import {
-  ApiProperty,
-  ApiPropertyOptional,
-} from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsBoolean,
   IsOptional,
@@ -12,8 +9,7 @@ import {
 
 export class CreateProductImageDto {
   @ApiProperty({
-    example:
-      'https://example.com/products/monstera-1.jpg',
+    example: 'https://example.com/products/monstera-1.jpg',
     description: 'URL slike proizvoda',
   })
   @IsUrl()
@@ -31,8 +27,7 @@ export class CreateProductImageDto {
 
   @ApiPropertyOptional({
     example: true,
-    description:
-      'Određuje da li je ovo glavna slika proizvoda',
+    description: 'Određuje da li je ovo glavna slika proizvoda',
     default: false,
   })
   @IsOptional()

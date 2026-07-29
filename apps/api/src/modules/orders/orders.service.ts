@@ -340,8 +340,27 @@ export class OrdersService {
     const page = query.page ?? 1;
     const limit = query.limit ?? 10;
     const skip = (page - 1) * limit;
+    const from = query.from ? new Date(query.from) : undefined;
+    const to = query.to ? new Date(query.to) : undefined;
+    if (to) {
+      to.setUTCHours(23, 59, 59, 999);
+    }
+    if (from && to && from > to) {
+      throw new BadRequestException(
+        'Početni datum ne sme biti posle krajnjeg datuma.',
+      );
+    }
 
     const where: Prisma.OrderWhereInput = {
+      ...(query.userId && { userId: query.userId }),
+      ...(from || to
+        ? {
+            createdAt: {
+              ...(from && { gte: from }),
+              ...(to && { lte: to }),
+            },
+          }
+        : {}),
       ...(query.status
         ? {
             status: query.status,
@@ -395,23 +414,23 @@ export class OrdersService {
     const [orders, total] = await this.prisma.$transaction([
       this.prisma.order.findMany({
         where,
-        include: {
+        select: {
+          id: true,
+          orderNumber: true,
+          status: true,
+          paymentStatus: true,
+          subtotal: true,
+          shippingPrice: true,
+          discount: true,
+          totalPrice: true,
+          createdAt: true,
+          updatedAt: true,
           user: {
             select: {
               id: true,
               firstName: true,
               lastName: true,
               email: true,
-            },
-          },
-          items: {
-            include: {
-              product: {
-                include: {
-                  images: true,
-                  category: true,
-                },
-              },
             },
           },
         },
@@ -430,7 +449,13 @@ export class OrdersService {
     const totalPages = Math.ceil(total / limit);
 
     return {
-      data: orders.map((order) => this.formatOrder(order)),
+      data: orders.map((order) => ({
+        ...order,
+        subtotal: Number(order.subtotal),
+        shippingPrice: Number(order.shippingPrice),
+        discount: Number(order.discount),
+        totalPrice: Number(order.totalPrice),
+      })),
       pagination: {
         page,
         limit,

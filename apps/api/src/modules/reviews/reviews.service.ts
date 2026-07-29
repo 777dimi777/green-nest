@@ -9,77 +9,114 @@ import { PrismaService } from '../../database/prisma.service';
 
 import { CreateReviewDto } from './dto/create-review.dto';
 import { UpdateReviewDto } from './dto/update-review.dto';
+import { ReviewsQueryDto } from './dto/reviews-query.dto';
 
 @Injectable()
 export class ReviewsService {
-  constructor(
-    private readonly prisma: PrismaService,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
-  async findByProduct(productId: string) {
-    const product =
-      await this.prisma.product.findFirst({
-        where: {
-          id: productId,
-          published: true,
-        },
-
-        select: {
-          id: true,
-        },
-      });
-
-    if (!product) {
-      throw new NotFoundException(
-        'Product not found.',
-      );
-    }
-
-    const reviews =
-      await this.prisma.review.findMany({
-        where: {
-          productId,
-        },
-
-        orderBy: {
-          createdAt: 'desc',
-        },
-
+  async findAll(query: ReviewsQueryDto) {
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 10;
+    const where = {
+      ...(query.productId && { productId: query.productId }),
+      ...(query.userId && { userId: query.userId }),
+      ...(query.rating !== undefined && { rating: query.rating }),
+    };
+    const [reviews, total] = await this.prisma.$transaction([
+      this.prisma.review.findMany({
+        where,
         include: {
           user: {
             select: {
               id: true,
               firstName: true,
               lastName: true,
+              email: true,
             },
           },
+          product: {
+            select: { id: true, name: true, slug: true },
+          },
         },
-      });
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      this.prisma.review.count({ where }),
+    ]);
+    const totalPages = Math.ceil(total / limit);
 
-    const aggregate =
-      await this.prisma.review.aggregate({
-        where: {
-          productId,
-        },
+    return {
+      data: reviews,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+        hasPreviousPage: page > 1,
+        hasNextPage: page < totalPages,
+      },
+    };
+  }
 
-        _avg: {
-          rating: true,
-        },
+  async findByProduct(productId: string) {
+    const product = await this.prisma.product.findFirst({
+      where: {
+        id: productId,
+        published: true,
+      },
 
-        _count: {
-          rating: true,
+      select: {
+        id: true,
+      },
+    });
+
+    if (!product) {
+      throw new NotFoundException('Product not found.');
+    }
+
+    const reviews = await this.prisma.review.findMany({
+      where: {
+        productId,
+      },
+
+      orderBy: {
+        createdAt: 'desc',
+      },
+
+      include: {
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+          },
         },
-      });
+      },
+    });
+
+    const aggregate = await this.prisma.review.aggregate({
+      where: {
+        productId,
+      },
+
+      _avg: {
+        rating: true,
+      },
+
+      _count: {
+        rating: true,
+      },
+    });
 
     return {
       data: reviews,
 
       summary: {
-        averageRating:
-          aggregate._avg.rating ?? 0,
+        averageRating: aggregate._avg.rating ?? 0,
 
-        totalReviews:
-          aggregate._count.rating,
+        totalReviews: aggregate._count.rating,
       },
     };
   }
@@ -89,70 +126,62 @@ export class ReviewsService {
     productId: string,
     createReviewDto: CreateReviewDto,
   ) {
-    const product =
-      await this.prisma.product.findFirst({
-        where: {
-          id: productId,
-          published: true,
-        },
+    const product = await this.prisma.product.findFirst({
+      where: {
+        id: productId,
+        published: true,
+      },
 
-        select: {
-          id: true,
-        },
-      });
+      select: {
+        id: true,
+      },
+    });
 
     if (!product) {
-      throw new NotFoundException(
-        'Product not found.',
-      );
+      throw new NotFoundException('Product not found.');
     }
 
-    const existingReview =
-      await this.prisma.review.findFirst({
-        where: {
-          userId,
-          productId,
-        },
-      });
+    const existingReview = await this.prisma.review.findFirst({
+      where: {
+        userId,
+        productId,
+      },
+    });
 
     if (existingReview) {
-      throw new ConflictException(
-        'You have already reviewed this product.',
-      );
+      throw new ConflictException('You have already reviewed this product.');
     }
 
-    const review =
-      await this.prisma.review.create({
-        data: {
-          ...createReviewDto,
+    const review = await this.prisma.review.create({
+      data: {
+        ...createReviewDto,
 
-          user: {
-            connect: {
-              id: userId,
-            },
-          },
-
-          product: {
-            connect: {
-              id: productId,
-            },
+        user: {
+          connect: {
+            id: userId,
           },
         },
 
-        include: {
-          user: {
-            select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-            },
+        product: {
+          connect: {
+            id: productId,
           },
         },
-      });
+      },
+
+      include: {
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
+      },
+    });
 
     return {
-      message:
-        'Review created successfully.',
+      message: 'Review created successfully.',
       data: review,
     };
   }
@@ -162,72 +191,57 @@ export class ReviewsService {
     reviewId: string,
     updateReviewDto: UpdateReviewDto,
   ) {
-    const review =
-      await this.prisma.review.findUnique({
-        where: {
-          id: reviewId,
-        },
-      });
+    const review = await this.prisma.review.findUnique({
+      where: {
+        id: reviewId,
+      },
+    });
 
     if (!review) {
-      throw new NotFoundException(
-        'Review not found.',
-      );
+      throw new NotFoundException('Review not found.');
     }
 
     if (review.userId !== userId) {
-      throw new ForbiddenException(
-        'You can only update your own review.',
-      );
+      throw new ForbiddenException('You can only update your own review.');
     }
 
-    const updatedReview =
-      await this.prisma.review.update({
-        where: {
-          id: reviewId,
-        },
+    const updatedReview = await this.prisma.review.update({
+      where: {
+        id: reviewId,
+      },
 
-        data: updateReviewDto,
+      data: updateReviewDto,
 
-        include: {
-          user: {
-            select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-            },
+      include: {
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
           },
         },
-      });
+      },
+    });
 
     return {
-      message:
-        'Review updated successfully.',
+      message: 'Review updated successfully.',
       data: updatedReview,
     };
   }
 
-  async remove(
-    userId: string,
-    reviewId: string,
-  ) {
-    const review =
-      await this.prisma.review.findUnique({
-        where: {
-          id: reviewId,
-        },
-      });
+  async remove(userId: string, reviewId: string, isAdmin = false) {
+    const review = await this.prisma.review.findUnique({
+      where: {
+        id: reviewId,
+      },
+    });
 
     if (!review) {
-      throw new NotFoundException(
-        'Review not found.',
-      );
+      throw new NotFoundException('Review not found.');
     }
 
-    if (review.userId !== userId) {
-      throw new ForbiddenException(
-        'You can only delete your own review.',
-      );
+    if (!isAdmin && review.userId !== userId) {
+      throw new ForbiddenException('You can only delete your own review.');
     }
 
     await this.prisma.review.delete({
@@ -237,22 +251,17 @@ export class ReviewsService {
     });
 
     return {
-      message:
-        'Review deleted successfully.',
+      message: 'Review deleted successfully.',
     };
   }
 
-  async findMyReview(
-    userId: string,
-    productId: string,
-  ) {
-    const review =
-      await this.prisma.review.findFirst({
-        where: {
-          userId,
-          productId,
-        },
-      });
+  async findMyReview(userId: string, productId: string) {
+    const review = await this.prisma.review.findFirst({
+      where: {
+        userId,
+        productId,
+      },
+    });
 
     return {
       hasReviewed: Boolean(review),

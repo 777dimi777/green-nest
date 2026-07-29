@@ -1,8 +1,5 @@
 import { Type } from 'class-transformer';
-import {
-  ApiProperty,
-  ApiPropertyOptional,
-} from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   ArrayMaxSize,
   IsArray,
@@ -34,8 +31,7 @@ export class CreateProductDto {
   name!: string;
 
   @ApiProperty({
-    example:
-      'Popularna sobna biljka sa velikim dekorativnim listovima.',
+    example: 'Popularna sobna biljka sa velikim dekorativnim listovima.',
     description: 'Detaljan opis proizvoda',
     minLength: 10,
     maxLength: 5000,
@@ -48,8 +44,7 @@ export class CreateProductDto {
 
   @ApiProperty({
     example: 'MON-001',
-    description:
-      'Jedinstvena interna oznaka proizvoda',
+    description: 'Jedinstvena interna oznaka proizvoda',
     maxLength: 50,
   })
   @IsString()
@@ -195,8 +190,7 @@ export class CreateProductDto {
 
   @ApiPropertyOptional({
     example: false,
-    description:
-      'Da li je biljka bezbedna za kućne ljubimce',
+    description: 'Da li je biljka bezbedna za kućne ljubimce',
     default: true,
   })
   @IsOptional()
@@ -205,8 +199,7 @@ export class CreateProductDto {
 
   @ApiPropertyOptional({
     example: true,
-    description:
-      'Da li se proizvod prikazuje među izdvojenim proizvodima',
+    description: 'Da li se proizvod prikazuje među izdvojenim proizvodima',
     default: false,
   })
   @IsOptional()
@@ -215,8 +208,7 @@ export class CreateProductDto {
 
   @ApiPropertyOptional({
     example: true,
-    description:
-      'Da li je proizvod javno vidljiv u prodavnici',
+    description: 'Da li je proizvod javno vidljiv u prodavnici',
     default: true,
   })
   @IsOptional()
@@ -225,8 +217,7 @@ export class CreateProductDto {
 
   @ApiProperty({
     example: 'cm123category',
-    description:
-      'ID kategorije kojoj proizvod pripada',
+    description: 'ID kategorije kojoj proizvod pripada',
   })
   @IsString()
   @IsNotEmpty()

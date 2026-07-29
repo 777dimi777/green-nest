@@ -419,6 +419,35 @@ export class ProductsService {
       message: 'Product deleted successfully.',
     };
   }
+
+  async updatePublished(id: string, published: boolean) {
+    await this.ensureProductExists(id);
+    return this.prisma.product.update({
+      where: { id },
+      data: { published },
+      include: { category: true, images: true },
+    });
+  }
+
+  async updateStock(id: string, stock: number) {
+    await this.ensureProductExists(id);
+    return this.prisma.product.update({
+      where: { id },
+      data: { stock },
+      include: { category: true, images: true },
+    });
+  }
+
+  private async ensureProductExists(id: string) {
+    const product = await this.prisma.product.findUnique({
+      where: { id },
+      select: { id: true },
+    });
+    if (!product) {
+      throw new NotFoundException('Product not found.');
+    }
+  }
+
   private async ensureCategoryExists(categoryId: string) {
     const category = await this.prisma.category.findUnique({
       where: {
@@ -451,41 +480,38 @@ export class ProductsService {
     }
   }
 
- private async generateUniqueSlug(
-  name: string,
-  excludedProductId?: string,
-) {
-  const baseSlug = name
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/đ/g, 'dj')
-    .replace(/Đ/g, 'dj')
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
+  private async generateUniqueSlug(name: string, excludedProductId?: string) {
+    const baseSlug = name
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/đ/g, 'dj')
+      .replace(/Đ/g, 'dj')
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
 
-  let slug = baseSlug;
-  let counter = 1;
+    let slug = baseSlug;
+    let counter = 1;
 
-  while (
-    await this.prisma.product.findFirst({
-      where: {
-        slug,
+    while (
+      await this.prisma.product.findFirst({
+        where: {
+          slug,
 
-        ...(excludedProductId
-          ? {
-              id: {
-                not: excludedProductId,
-              },
-            }
-          : {}),
-      },
-    })
-  ) {
-    slug = `${baseSlug}-${counter++}`;
+          ...(excludedProductId
+            ? {
+                id: {
+                  not: excludedProductId,
+                },
+              }
+            : {}),
+        },
+      })
+    ) {
+      slug = `${baseSlug}-${counter++}`;
+    }
+
+    return slug;
   }
-
-  return slug;
-}
 }

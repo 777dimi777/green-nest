@@ -7,6 +7,9 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
+  Delete,
+  Param,
+  Query,
 } from '@nestjs/common';
 import { UserRole } from '@prisma/client';
 import {
@@ -17,6 +20,8 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
   ApiBadRequestResponse,
+  ApiConflictResponse,
+  ApiNotFoundResponse,
 } from '@nestjs/swagger';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -25,6 +30,8 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { UsersService } from './users.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { UsersQueryDto } from './dto/users-query.dto';
+import { UpdateUserRoleDto } from './dto/update-user-role.dto';
 @ApiTags('Users')
 @Controller('users')
 export class UsersController {
@@ -111,7 +118,60 @@ export class UsersController {
   @ApiForbiddenResponse({
     description: 'Korisnik nema administratorska prava.',
   })
-  findAll() {
-    return this.usersService.findAll();
+  findAll(@Query() query: UsersQueryDto) {
+    return this.usersService.findAll(query);
+  }
+
+  @Get(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Admin pregled korisnika i statistika' })
+  @ApiOkResponse({ description: 'Korisnik i statistike su vraćeni.' })
+  @ApiUnauthorizedResponse({ description: 'Korisnik nije prijavljen.' })
+  @ApiForbiddenResponse({ description: 'Potreban je ADMIN pristup.' })
+  @ApiNotFoundResponse({ description: 'Korisnik nije pronađen.' })
+  findAdminById(@Param('id') userId: string) {
+    return this.usersService.findAdminById(userId);
+  }
+
+  @Patch(':id/role')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Admin promena uloge korisnika' })
+  @ApiOkResponse({ description: 'Uloga je uspešno promenjena.' })
+  @ApiUnauthorizedResponse({ description: 'Korisnik nije prijavljen.' })
+  @ApiForbiddenResponse({ description: 'Potreban je ADMIN pristup.' })
+  @ApiNotFoundResponse({ description: 'Korisnik nije pronađen.' })
+  @ApiConflictResponse({
+    description: 'Jedini administrator ne može ukloniti svoju ulogu.',
+  })
+  updateRole(
+    @CurrentUser('id') currentAdminId: string,
+    @Param('id') userId: string,
+    @Body() dto: UpdateUserRoleDto,
+  ) {
+    return this.usersService.updateRole(currentAdminId, userId, dto.role);
+  }
+
+  @Delete(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Admin brisanje korisnika' })
+  @ApiOkResponse({ description: 'Korisnik je uspešno obrisan.' })
+  @ApiUnauthorizedResponse({ description: 'Korisnik nije prijavljen.' })
+  @ApiForbiddenResponse({ description: 'Potreban je ADMIN pristup.' })
+  @ApiNotFoundResponse({ description: 'Korisnik nije pronađen.' })
+  @ApiConflictResponse({
+    description:
+      'Nalog pripada administratoru ili ima povezanu poslovnu istoriju.',
+  })
+  remove(
+    @CurrentUser('id') currentAdminId: string,
+    @Param('id') userId: string,
+  ) {
+    return this.usersService.remove(currentAdminId, userId);
   }
 }
