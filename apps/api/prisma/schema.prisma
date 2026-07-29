@@ -39,18 +39,30 @@ enum PaymentTransactionStatus {
   REFUNDED
 }
 
+enum NotificationType {
+  ORDER_CREATED
+  ORDER_CONFIRMED
+  ORDER_SHIPPED
+  ORDER_DELIVERED
+  ORDER_CANCELLED
+  PAYMENT_COMPLETED
+  PAYMENT_FAILED
+  PAYMENT_REFUNDED
+  GENERAL
+}
+
 model User {
-  id                 String        @id @default(cuid())
+  id                 String         @id @default(cuid())
   firstName          String
   lastName           String
-  email              String        @unique
+  email              String         @unique
   password           String
   phone              String?
   avatar             String?
-  role               UserRole      @default(CUSTOMER)
-  isVerified         Boolean       @default(false)
-  createdAt          DateTime      @default(now())
-  updatedAt          DateTime      @updatedAt
+  role               UserRole       @default(CUSTOMER)
+  isVerified         Boolean        @default(false)
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
   hashedRefreshToken String?
   addresses          Address[]
   orders             Order[]
@@ -59,6 +71,7 @@ model User {
   wishlist           Wishlist[]
   cart               Cart?
   payments           Payment[]
+  notifications      Notification[]
 
   @@map("users")
 }
@@ -215,12 +228,13 @@ model Order {
   userId               String
   user                 User    @relation(fields: [userId], references: [id])
 
-  items     OrderItem[]
-  couponId  String?
-  coupon    Coupon?     @relation(fields: [couponId], references: [id])
-  payments  Payment[]
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
+  items         OrderItem[]
+  couponId      String?
+  coupon        Coupon?        @relation(fields: [couponId], references: [id])
+  payments      Payment[]
+  notifications Notification[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 
   @@map("orders")
 }
@@ -242,14 +256,41 @@ model Payment {
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  notifications Notification[]
 
   @@index([orderId])
   @@index([userId, createdAt])
   @@index([status])
   @@index([method])
   @@map("payments")
+}
+
+model Notification {
+  id      String           @id @default(cuid())
+  type    NotificationType
+  title   String
+  message String
+  read    Boolean          @default(false)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  orderId String?
+  order   Order?  @relation(fields: [orderId], references: [id], onDelete: SetNull)
+
+  paymentId String?
+  payment   Payment? @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime  @default(now())
+  readAt    DateTime?
+
+  @@index([userId, read])
+  @@index([userId, createdAt])
+  @@index([orderId])
+  @@index([paymentId])
+  @@map("notifications")
 }
 
 model OrderItem {

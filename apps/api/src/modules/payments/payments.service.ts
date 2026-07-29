@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import {
   OrderStatus,
+  NotificationType,
   PaymentMethod,
   PaymentStatus,
   PaymentTransactionStatus,
@@ -16,6 +17,7 @@ import { PrismaService } from '../../database/prisma.service';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { PaymentsQueryDto } from './dto/payments-query.dto';
 import { UpdatePaymentStatusDto } from './dto/update-payment-status.dto';
+import { NotificationsService } from '../notifications/notifications.service';
 
 const paymentOrderSelect = {
   id: true,
@@ -34,7 +36,10 @@ const paymentUserSelect = {
 
 @Injectable()
 export class PaymentsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notificationsService: NotificationsService,
+  ) {}
 
   async createPayment(userId: string, orderId: string, dto: CreatePaymentDto) {
     if (
@@ -111,6 +116,16 @@ export class PaymentsService {
             data: { paymentStatus: PaymentStatus.PAID },
           });
 
+          await this.notificationsService.createPaymentNotification(
+            userId,
+            orderId,
+            payment.id,
+            order.orderNumber,
+            NotificationType.PAYMENT_COMPLETED,
+            null,
+            transaction,
+          );
+
           return payment;
         }
 
@@ -165,11 +180,36 @@ export class PaymentsService {
         });
 
         if (!failed) {
+          await transaction.payment.updateMany({
+            where: {
+              orderId,
+              method: PaymentMethod.CASH_ON_DELIVERY,
+              status: PaymentTransactionStatus.PENDING,
+            },
+            data: {
+              status: PaymentTransactionStatus.FAILED,
+              failureReason:
+                'Plaćanje pouzećem je zatvoreno nakon uspešnog CARD plaćanja.',
+            },
+          });
+
           await transaction.order.update({
             where: { id: orderId },
             data: { paymentStatus: PaymentStatus.PAID },
           });
         }
+
+        await this.notificationsService.createPaymentNotification(
+          userId,
+          orderId,
+          payment.id,
+          order.orderNumber,
+          failed
+            ? NotificationType.PAYMENT_FAILED
+            : NotificationType.PAYMENT_COMPLETED,
+          payment.failureReason,
+          transaction,
+        );
 
         return payment;
       });
@@ -352,6 +392,18 @@ export class PaymentsService {
               : PaymentStatus.PAID,
           },
         });
+
+        await this.notificationsService.createPaymentNotification(
+          payment.userId,
+          payment.orderId,
+          payment.id,
+          payment.order.orderNumber,
+          canRefund
+            ? NotificationType.PAYMENT_REFUNDED
+            : NotificationType.PAYMENT_COMPLETED,
+          null,
+          transaction,
+        );
 
         return updatedPayment;
       });

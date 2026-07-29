@@ -12,6 +12,7 @@ import { OrdersModule } from './modules/orders/orders.module';
 import { AddressesModule } from './modules/addresses/addresses.module';
 import { CouponsModule } from './modules/coupons/coupons.module';
 import { PaymentsModule } from './modules/payments/payments.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { PaymentsModule } from './modules/payments/payments.module';
     AddressesModule,
     CouponsModule,
     PaymentsModule,
+    NotificationsModule,
   ],
 })
 export class AppModule {}

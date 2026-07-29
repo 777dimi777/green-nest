@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import {
   OrderStatus,
+  NotificationType,
   PaymentMethod,
   PaymentStatus,
   PaymentTransactionStatus,
@@ -13,6 +14,7 @@ import {
 import { PrismaService } from '../../database/prisma.service';
 import { OrdersQueryDto } from './dto/orders-query.dto';
 import { CouponsService } from '../coupons/coupons.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 type FormattableOrder = {
   id: string;
@@ -43,6 +45,7 @@ export class OrdersService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly couponsService: CouponsService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   async createOrder(userId: string, addressId: string, couponCode?: string) {
@@ -191,6 +194,14 @@ export class OrdersService {
         );
       }
 
+      await this.notificationsService.createOrderNotification(
+        userId,
+        order.id,
+        order.orderNumber,
+        NotificationType.ORDER_CREATED,
+        transaction,
+      );
+
       return this.formatOrder(order);
     });
   }
@@ -313,6 +324,14 @@ export class OrdersService {
           },
         },
       });
+
+      await this.notificationsService.createOrderNotification(
+        userId,
+        cancelledOrder.id,
+        cancelledOrder.orderNumber,
+        NotificationType.ORDER_CANCELLED,
+        transaction,
+      );
 
       return this.formatOrder(cancelledOrder);
     });
@@ -458,69 +477,88 @@ export class OrdersService {
     return this.formatOrder(order);
   }
   async updateStatus(orderId: string, status: OrderStatus) {
-    const order = await this.prisma.order.findUnique({
-      where: {
-        id: orderId,
-      },
-    });
-
-    if (!order) {
-      throw new NotFoundException('Porudžbina nije pronađena.');
-    }
-
-    if (order.status === status) {
-      throw new BadRequestException(`Porudžbina već ima status ${status}.`);
-    }
-    const allowedTransitions: Record<OrderStatus, OrderStatus[]> = {
-      [OrderStatus.PENDING]: [OrderStatus.CONFIRMED],
-
-      [OrderStatus.CONFIRMED]: [OrderStatus.SHIPPED],
-
-      [OrderStatus.SHIPPED]: [OrderStatus.DELIVERED],
-
-      [OrderStatus.DELIVERED]: [],
-
-      [OrderStatus.CANCELLED]: [],
-    };
-
-    const allowedStatuses = allowedTransitions[order.status];
-
-    if (!allowedStatuses.includes(status)) {
-      throw new BadRequestException(
-        `Promena statusa iz ${order.status} u ${status} nije dozvoljena.`,
-      );
-    }
-
-    const updatedOrder = await this.prisma.order.update({
-      where: {
-        id: orderId,
-      },
-      data: {
-        status,
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            email: true,
-          },
+    return this.prisma.$transaction(async (transaction) => {
+      const order = await transaction.order.findUnique({
+        where: {
+          id: orderId,
         },
-        items: {
-          include: {
-            product: {
-              include: {
-                images: true,
-                category: true,
+      });
+
+      if (!order) {
+        throw new NotFoundException('Porudžbina nije pronađena.');
+      }
+
+      if (order.status === status) {
+        throw new BadRequestException(`Porudžbina već ima status ${status}.`);
+      }
+      const allowedTransitions: Record<OrderStatus, OrderStatus[]> = {
+        [OrderStatus.PENDING]: [OrderStatus.CONFIRMED],
+
+        [OrderStatus.CONFIRMED]: [OrderStatus.SHIPPED],
+
+        [OrderStatus.SHIPPED]: [OrderStatus.DELIVERED],
+
+        [OrderStatus.DELIVERED]: [],
+
+        [OrderStatus.CANCELLED]: [],
+      };
+
+      const allowedStatuses = allowedTransitions[order.status];
+
+      if (!allowedStatuses.includes(status)) {
+        throw new BadRequestException(
+          `Promena statusa iz ${order.status} u ${status} nije dozvoljena.`,
+        );
+      }
+
+      const updatedOrder = await transaction.order.update({
+        where: {
+          id: orderId,
+        },
+        data: {
+          status,
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true,
+            },
+          },
+          items: {
+            include: {
+              product: {
+                include: {
+                  images: true,
+                  category: true,
+                },
               },
             },
           },
         },
-      },
-    });
+      });
 
-    return this.formatOrder(updatedOrder);
+      const notificationType: Partial<Record<OrderStatus, NotificationType>> = {
+        [OrderStatus.CONFIRMED]: NotificationType.ORDER_CONFIRMED,
+        [OrderStatus.SHIPPED]: NotificationType.ORDER_SHIPPED,
+        [OrderStatus.DELIVERED]: NotificationType.ORDER_DELIVERED,
+        [OrderStatus.CANCELLED]: NotificationType.ORDER_CANCELLED,
+      };
+      const type = notificationType[status];
+      if (type) {
+        await this.notificationsService.createOrderNotification(
+          order.userId,
+          order.id,
+          order.orderNumber,
+          type,
+          transaction,
+        );
+      }
+
+      return this.formatOrder(updatedOrder);
+    });
   }
   async updatePaymentStatus(orderId: string, paymentStatus: PaymentStatus) {
     const order = await this.prisma.order.findUnique({
@@ -663,6 +701,35 @@ export class OrdersService {
           },
         },
       });
+
+      await this.notificationsService.createOrderNotification(
+        order.userId,
+        cancelledOrder.id,
+        cancelledOrder.orderNumber,
+        NotificationType.ORDER_CANCELLED,
+        transaction,
+      );
+
+      if (paymentStatus === PaymentStatus.REFUNDED) {
+        const refundedPayments = await transaction.payment.findMany({
+          where: {
+            orderId,
+            status: PaymentTransactionStatus.REFUNDED,
+          },
+          select: { id: true },
+        });
+        for (const payment of refundedPayments) {
+          await this.notificationsService.createPaymentNotification(
+            order.userId,
+            order.id,
+            payment.id,
+            order.orderNumber,
+            NotificationType.PAYMENT_REFUNDED,
+            null,
+            transaction,
+          );
+        }
+      }
 
       return this.formatOrder(cancelledOrder);
     });
