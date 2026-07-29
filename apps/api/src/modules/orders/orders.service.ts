@@ -3,10 +3,41 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { OrderStatus, PaymentStatus, Prisma } from '@prisma/client';
+import {
+  OrderStatus,
+  PaymentMethod,
+  PaymentStatus,
+  PaymentTransactionStatus,
+  Prisma,
+} from '@prisma/client';
 import { PrismaService } from '../../database/prisma.service';
 import { OrdersQueryDto } from './dto/orders-query.dto';
 import { CouponsService } from '../coupons/coupons.service';
+
+type FormattableOrder = {
+  id: string;
+  orderNumber: string;
+  status: OrderStatus;
+  paymentStatus: PaymentStatus;
+  user?: unknown;
+  shippingFirstName: string;
+  shippingLastName: string;
+  shippingPhone: string;
+  shippingCountry: string;
+  shippingCity: string;
+  shippingPostalCode: string;
+  shippingStreet: string;
+  shippingStreetNumber: string;
+  shippingApartment: string | null;
+  subtotal: Prisma.Decimal;
+  shippingPrice: Prisma.Decimal;
+  discount: Prisma.Decimal;
+  totalPrice: Prisma.Decimal;
+  items: unknown;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
 @Injectable()
 export class OrdersService {
   constructor(
@@ -249,6 +280,18 @@ export class OrdersService {
           },
         });
       }
+
+      await transaction.payment.updateMany({
+        where: {
+          orderId,
+          method: PaymentMethod.CASH_ON_DELIVERY,
+          status: PaymentTransactionStatus.PENDING,
+        },
+        data: {
+          status: PaymentTransactionStatus.FAILED,
+          failureReason: 'Porudžbina je otkazana.',
+        },
+      });
 
       const cancelledOrder = await transaction.order.update({
         where: {
@@ -567,6 +610,30 @@ export class OrdersService {
           ? PaymentStatus.REFUNDED
           : order.paymentStatus;
 
+      if (paymentStatus === PaymentStatus.REFUNDED) {
+        await transaction.payment.updateMany({
+          where: {
+            orderId,
+            status: PaymentTransactionStatus.COMPLETED,
+          },
+          data: {
+            status: PaymentTransactionStatus.REFUNDED,
+          },
+        });
+      } else {
+        await transaction.payment.updateMany({
+          where: {
+            orderId,
+            method: PaymentMethod.CASH_ON_DELIVERY,
+            status: PaymentTransactionStatus.PENDING,
+          },
+          data: {
+            status: PaymentTransactionStatus.FAILED,
+            failureReason: 'Porudžbina je otkazana.',
+          },
+        });
+      }
+
       const cancelledOrder = await transaction.order.update({
         where: {
           id: orderId,
@@ -626,7 +693,7 @@ export class OrdersService {
     return orderNumber;
   }
 
-  private formatOrder(order: any) {
+  private formatOrder(order: FormattableOrder) {
     return {
       id: order.id,
       orderNumber: order.orderNumber,
