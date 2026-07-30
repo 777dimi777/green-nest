@@ -28,9 +28,13 @@ export function Header() {
           ))}
         </nav>
         <div className="flex items-center gap-0.5">
-          <Button variant="ghost" size="icon" aria-label="Pretraga">
-            <Search />
-          </Button>
+          <Link
+            href="/prodavnica#catalog-search"
+            aria-label="Pretraži proizvode"
+            className="inline-flex size-10 items-center justify-center rounded-md hover:bg-accent"
+          >
+            <Search className="size-4" />
+          </Link>
           <ThemeToggle />
           <AccountMenu />
           <Button

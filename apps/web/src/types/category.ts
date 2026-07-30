@@ -1,4 +1,17 @@
-export interface Category {
-  id: string; name: string; slug: string; description: string | null; image: string | null;
-  parentId: string | null; createdAt: string; updatedAt: string;
+export interface CategorySummary {
+  id: string;
+  name: string;
+  slug: string;
+}
+
+export interface Category extends CategorySummary {
+  description: string | null;
+  image: string | null;
+  parentId: string | null;
+  createdAt: string;
+  updatedAt: string;
+  children: CategorySummary[];
+  _count: {
+    products: number;
+  };
 }
