@@ -1,16 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, Check, ShoppingBag } from "lucide-react";
-import { toast } from "sonner";
+import { ArrowLeft, Check } from "lucide-react";
 import { ErrorState } from "@/components/common/error-state";
 import { LoadingSpinner } from "@/components/common/loading-spinner";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
+import { AddToCartControl } from "@/features/cart/components/add-to-cart-control";
+import { WishlistButton } from "@/features/wishlist/components/wishlist-button";
 import { useProduct } from "@/features/products/hooks/use-product";
 import { ApiError, getApiErrorMessage } from "@/lib/api/api-error";
 import { formatCurrency } from "@/lib/utils/currency";
 import { ProductGallery } from "./product-gallery";
-import { ProductReviews } from "./product-reviews";
+import { ProductReviewsSection } from "@/features/reviews/components/product-reviews-section";
 import { StockStatus } from "./stock-status";
 
 export function ProductDetailsView({ slug }: { slug: string }) {
@@ -99,17 +100,10 @@ export function ProductDetailsView({ slug }: { slug: string }) {
           <p className="mt-7 whitespace-pre-line text-base leading-8 text-muted-foreground">
             {product.description}
           </p>
-          <Button
-            size="lg"
-            className="mt-8 w-full sm:w-auto"
-            disabled={product.stock <= 0}
-            onClick={() =>
-              toast.info("Dodavanje u korpu dolazi u sledećem segmentu.")
-            }
-          >
-            <ShoppingBag />
-            {product.stock > 0 ? "Dodaj u korpu" : "Trenutno nedostupno"}
-          </Button>
+          <div className="flex flex-wrap items-end gap-3">
+            <AddToCartControl productId={product.id} stock={product.stock} />
+            <WishlistButton productId={product.id} className="mb-0" />
+          </div>
           <div className="mt-8 flex flex-wrap gap-3 text-sm text-muted-foreground">
             {product.airPurifying && (
               <span className="inline-flex items-center gap-2 rounded-full bg-secondary px-3 py-1.5">
@@ -136,7 +130,7 @@ export function ProductDetailsView({ slug }: { slug: string }) {
           )}
         </div>
       </div>
-      <ProductReviews reviews={product.reviews} />
+      <ProductReviewsSection productId={product.id} productSlug={product.slug} />
     </>
   );
 }

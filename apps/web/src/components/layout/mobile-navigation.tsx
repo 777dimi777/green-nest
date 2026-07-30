@@ -53,6 +53,12 @@ export function MobileNavigation() {
         </nav>
         <div className="mt-8 grid gap-3 border-t pt-6">
           <SheetClose asChild>
+            <Link className="text-sm font-medium" href="/lista-zelja">Lista želja</Link>
+          </SheetClose>
+          <SheetClose asChild>
+            <Link className="text-sm font-medium" href="/korpa">Korpa</Link>
+          </SheetClose>
+          <SheetClose asChild>
             <Link
               className="text-sm font-medium"
               href={user ? "/nalog" : "/auth/login"}

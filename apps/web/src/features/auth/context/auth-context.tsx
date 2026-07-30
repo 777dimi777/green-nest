@@ -7,6 +7,10 @@ import {
   useMemo,
   useState,
 } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { cartQueryKeys } from "@/features/cart/queries/cart-query-keys";
+import { wishlistQueryKeys } from "@/features/wishlist/queries/wishlist-query-keys";
+import { reviewQueryKeys } from "@/features/reviews/queries/review-query-keys";
 import { authStorage } from "@/lib/auth/auth-storage";
 import type { LoginRequest, RegisterRequest } from "@/types/auth";
 import type { User } from "@/types/user";
@@ -24,6 +28,7 @@ interface AuthContextValue {
 export const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const queryClient = useQueryClient();
   const [user, setUser] = useState<User | null>(null);
   const [isInitializing, setIsInitializing] = useState(true);
 
@@ -74,8 +79,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       authStorage.clearTokens();
       setUser(null);
+      queryClient.removeQueries({ queryKey: cartQueryKeys.all });
+      queryClient.removeQueries({ queryKey: wishlistQueryKeys.all });
+      queryClient.removeQueries({ queryKey: reviewQueryKeys.all });
     }
-  }, []);
+  }, [queryClient]);
 
   const value = useMemo<AuthContextValue>(
     () => ({

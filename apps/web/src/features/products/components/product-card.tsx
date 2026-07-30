@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
+import { WishlistButton } from "@/features/wishlist/components/wishlist-button";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/utils/currency";
 import type { ProductListItem } from "@/types/product";
@@ -12,7 +13,7 @@ export function ProductCard({ product }: { product: ProductListItem }) {
   const activePrice = product.discountPrice ?? product.price;
 
   return (
-    <Card className="group overflow-hidden transition duration-300 hover:-translate-y-1 hover:shadow-[0_24px_55px_-30px_rgba(24,54,39,.5)]">
+    <Card className="group relative overflow-hidden transition duration-300 hover:-translate-y-1 hover:shadow-[0_24px_55px_-30px_rgba(24,54,39,.5)]">
       <Link
         href={`/prodavnica/${product.slug}`}
         className="block focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
@@ -55,6 +56,7 @@ export function ProductCard({ product }: { product: ProductListItem }) {
           </div>
         </CardContent>
       </Link>
+      <WishlistButton productId={product.id} className="absolute right-3 top-3 z-10 bg-background/90" />
     </Card>
   );
 }
