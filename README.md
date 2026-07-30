@@ -105,7 +105,38 @@ npm run test:e2e
 npx prisma validate
 ```
 
-There is currently no seed script or stable public test account in this repository.
+## Development seed data
+
+Run the deterministic development seed after applying migrations:
+
+```bash
+cd apps/api
+npx prisma db seed
+```
+
+The command is idempotent and updates only stable Green Nest demo records. It does not truncate or reset the database.
+
+### Local test accounts
+
+| Role | Email | Password |
+| --- | --- | --- |
+| Administrator | `admin@greennest.test` | `Admin123!` |
+| Customer | `milos@greennest.test` | `User123!` |
+| Second customer | `ana@greennest.test` | `User123!` |
+| Customer without orders | `novi@greennest.test` | `User123!` |
+
+These credentials are for local development and demos only. Production must use different credentials, and the seed must never run automatically in production unless that is explicitly intended.
+
+### Test coupons
+
+- `WELCOME10` — active 10% discount with a 1,500 RSD minimum.
+- `SAVE500` — active fixed 500 RSD discount with a 3,000 RSD minimum.
+- `EXPIRED20` — expired percentage coupon.
+- `INACTIVE15` — inactive coupon.
+- `LIMIT1` — usage limit already reached.
+- `MINIMUM` — active coupon with a deliberately high 50,000 RSD minimum.
+
+The seed also creates published and unpublished products, discounted and featured products, out-of-stock and low-stock cases, all supported order/payment statuses, reviews, wishlists, carts and read/unread notifications. Product image records are intentionally not seeded because the repository does not contain stable local product image assets.
 
 ## Production deployment
 
