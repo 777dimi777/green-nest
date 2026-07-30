@@ -178,6 +178,7 @@ export class UsersService {
               orders: true,
               reviews: true,
               wishlist: true,
+              addresses: true,
             },
           },
         },
@@ -221,6 +222,7 @@ export class UsersService {
             orders: true,
             reviews: true,
             wishlist: true,
+            addresses: true,
           },
         },
       },
@@ -243,6 +245,7 @@ export class UsersService {
         orders: user._count.orders,
         reviews: user._count.reviews,
         wishlistItems: user._count.wishlist,
+        addresses: user._count.addresses,
         totalSpent: Number(
           (spent._sum.totalPrice ?? new Prisma.Decimal(0)).toFixed(2),
         ),

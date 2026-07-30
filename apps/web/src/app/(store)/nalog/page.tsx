@@ -57,11 +57,7 @@ export default function AccountPage() {
             </CardContent>
           </Card>
         )}
-        <p className="mt-6 text-sm text-muted-foreground">
-          Upravljanje profilom i istorija porudžbina biće dodati u narednim
-          segmentima.
-        </p>
-      </PageContainer>
+</PageContainer>
     </ProtectedRoute>
   );
 }

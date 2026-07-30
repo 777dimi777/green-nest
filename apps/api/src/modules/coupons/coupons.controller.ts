@@ -8,6 +8,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -27,6 +28,7 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { CouponsService } from './coupons.service';
 import { CreateCouponDto } from './dto/create-coupon.dto';
 import { UpdateCouponDto } from './dto/update-coupon.dto';
+import { AdminCouponsQueryDto } from './dto/admin-coupons-query.dto';
 
 @ApiTags('Coupons')
 @ApiBearerAuth()
@@ -49,6 +51,13 @@ export class CouponsController {
   @ApiOkResponse({ description: 'Kuponi sortirani od najnovijeg.' })
   findAll() {
     return this.couponsService.findAll();
+  }
+
+  @Get('admin/all')
+  @ApiOperation({ summary: 'Paginirani admin pregled kupona sa filterima' })
+  @ApiOkResponse({ description: 'Paginirana lista kupona.' })
+  findAllAdmin(@Query() query: AdminCouponsQueryDto) {
+    return this.couponsService.findAllAdmin(query);
   }
 
   @Get(':id')

@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { NotificationType, Prisma } from '@prisma/client';
 import { PrismaService } from '../../database/prisma.service';
 import { NotificationsQueryDto } from './dto/notifications-query.dto';
+import { AdminNotificationsQueryDto } from './dto/admin-notifications-query.dto';
 
 export type NotificationDatabase = PrismaService | Prisma.TransactionClient;
 
@@ -91,6 +92,86 @@ export class NotificationsService {
         hasNextPage: page < totalPages,
       },
     };
+  }
+
+  async findAllAdmin(query: AdminNotificationsQueryDto) {
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 20;
+    const where: Prisma.NotificationWhereInput = {
+      ...(query.userId && { userId: query.userId }),
+      ...(query.read !== undefined && { read: query.read }),
+      ...(query.type && { type: query.type }),
+      ...(query.search && {
+        OR: [
+          { title: { contains: query.search, mode: 'insensitive' } },
+          { message: { contains: query.search, mode: 'insensitive' } },
+          {
+            user: {
+              email: { contains: query.search, mode: 'insensitive' },
+            },
+          },
+        ],
+      }),
+    };
+    const [notifications, total] = await this.prisma.$transaction([
+      this.prisma.notification.findMany({
+        where,
+        select: {
+          id: true,
+          type: true,
+          title: true,
+          message: true,
+          read: true,
+          readAt: true,
+          orderId: true,
+          paymentId: true,
+          createdAt: true,
+          user: {
+            select: { id: true, firstName: true, lastName: true, email: true },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      this.prisma.notification.count({ where }),
+    ]);
+    const totalPages = Math.ceil(total / limit);
+    return {
+      data: notifications,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+        hasPreviousPage: page > 1,
+        hasNextPage: page < totalPages,
+      },
+    };
+  }
+
+  async findAdminById(notificationId: string) {
+    const notification = await this.prisma.notification.findUnique({
+      where: { id: notificationId },
+      select: {
+        id: true,
+        type: true,
+        title: true,
+        message: true,
+        read: true,
+        readAt: true,
+        orderId: true,
+        paymentId: true,
+        createdAt: true,
+        user: {
+          select: { id: true, firstName: true, lastName: true, email: true },
+        },
+      },
+    });
+    if (!notification) {
+      throw new NotFoundException('Notifikacija nije pronađena.');
+    }
+    return notification;
   }
 
   async getUnreadCount(userId: string) {

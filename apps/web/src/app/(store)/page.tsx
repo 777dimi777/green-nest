@@ -8,7 +8,6 @@ import {
   ShieldCheck,
   Sparkles,
 } from "lucide-react";
-import { NewsletterForm } from "@/components/common/newsletter-form";
 import { PageContainer } from "@/components/common/page-container";
 import { SectionHeading } from "@/components/common/section-heading";
 import { buttonVariants } from "@/components/ui/button";
@@ -155,10 +154,8 @@ export default function HomePage() {
                 Malo više zelenog u vašem inboxu.
               </h2>
               <p className="mt-4 leading-7 opacity-80">
-                Saveti za negu i novosti iz ponude. Prijava još nije aktivna —
-                obavestićemo vas kada bude spremna.
-              </p>
-              <NewsletterForm />
+                Pronađite biljke koje odgovaraju vašem prostoru i iskustvu.\n              </p>
+              <Link href="/prodavnica" className={cn(buttonVariants({variant:"secondary",size:"lg"}),"mt-7")}>Pogledaj ponudu <ArrowRight /></Link>
             </div>
           </div>
         </PageContainer>

@@ -245,6 +245,7 @@ export class PaymentsService {
     const limit = query.limit ?? 10;
     const skip = (page - 1) * limit;
     const where: Prisma.PaymentWhereInput = {
+      ...(query.orderId && { orderId: query.orderId }),
       ...(query.status && { status: query.status }),
       ...(query.method && { method: query.method }),
       ...(query.search && {
@@ -282,7 +283,9 @@ export class PaymentsService {
           order: { select: paymentOrderSelect },
           user: { select: paymentUserSelect },
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy: {
+          [query.sortBy ?? 'createdAt']: query.sortOrder ?? 'desc',
+        },
         skip,
         take: limit,
       }),

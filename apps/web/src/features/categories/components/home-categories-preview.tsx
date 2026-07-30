@@ -41,7 +41,7 @@ export function HomeCategoriesPreview() {
     return (
       <EmptyState
         icon={Shapes}
-        title="Kategorije stižu uskoro"
+        title="Trenutno nema dostupnih kategorija"
         description="Još nema kategorija za prikaz."
       />
     );

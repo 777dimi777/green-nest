@@ -72,6 +72,19 @@ export class CategoriesController {
     return this.categoriesService.findAll();
   }
 
+  @Get('admin/:id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Admin details of a category by ID' })
+  @ApiOkResponse({ description: 'Category details returned successfully.' })
+  @ApiUnauthorizedResponse({ description: 'User is not authenticated.' })
+  @ApiForbiddenResponse({ description: 'Administrator access is required.' })
+  @ApiNotFoundResponse({ description: 'Category was not found.' })
+  findAdminById(@Param('id') categoryId: string) {
+    return this.categoriesService.findAdminById(categoryId);
+  }
+
   @Get(':slug')
   @ApiOperation({
     summary: 'Javni detalji kategorije po slug-u',

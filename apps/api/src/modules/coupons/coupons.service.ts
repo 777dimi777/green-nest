@@ -8,6 +8,7 @@ import { Coupon, Prisma } from '@prisma/client';
 import { PrismaService } from '../../database/prisma.service';
 import { CreateCouponDto } from './dto/create-coupon.dto';
 import { UpdateCouponDto } from './dto/update-coupon.dto';
+import { AdminCouponsQueryDto } from './dto/admin-coupons-query.dto';
 
 type DatabaseClient = PrismaService | Prisma.TransactionClient;
 
@@ -65,6 +66,47 @@ export class CouponsService {
     return this.prisma.coupon.findMany({
       orderBy: { createdAt: 'desc' },
     });
+  }
+
+  async findAllAdmin(query: AdminCouponsQueryDto) {
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 10;
+    const now = new Date();
+    const where: Prisma.CouponWhereInput = {
+      ...(query.search && {
+        code: { contains: query.search.trim(), mode: 'insensitive' },
+      }),
+      ...(query.active !== undefined && { active: query.active }),
+      ...(query.type === 'PERCENTAGE' && { percentage: { not: null } }),
+      ...(query.type === 'FIXED' && { fixedAmount: { not: null } }),
+      ...(query.expired === true && { expiresAt: { lte: now } }),
+      ...(query.expired === false && {
+        OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
+      }),
+    };
+    const [coupons, total] = await this.prisma.$transaction([
+      this.prisma.coupon.findMany({
+        where,
+        orderBy: {
+          [query.sortBy ?? 'createdAt']: query.sortOrder ?? 'desc',
+        },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      this.prisma.coupon.count({ where }),
+    ]);
+    const totalPages = Math.ceil(total / limit);
+    return {
+      data: coupons,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+        hasPreviousPage: page > 1,
+        hasNextPage: page < totalPages,
+      },
+    };
   }
 
   async findOne(id: string) {

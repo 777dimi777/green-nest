@@ -43,15 +43,16 @@ async function bootstrap() {
     }),
   );
 
-  const config = new DocumentBuilder()
-    .setTitle('Green Nest API')
-    .setDescription('Backend API for Green Nest e-commerce')
-    .setVersion('1.0.0')
-    .addBearerAuth()
-    .build();
-  const document = SwaggerModule.createDocument(app, config);
-
-  SwaggerModule.setup('api/docs', app, document);
+  if (configService.get<string>('SWAGGER_ENABLED') === 'true') {
+    const config = new DocumentBuilder()
+      .setTitle('Green Nest API')
+      .setDescription('Backend API for Green Nest e-commerce')
+      .setVersion('1.0.0')
+      .addBearerAuth()
+      .build();
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('api/docs', app, document);
+  }
 
   await app.listen(configService.getOrThrow<number>('PORT'));
 }

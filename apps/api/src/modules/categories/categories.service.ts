@@ -81,6 +81,21 @@ export class CategoriesService {
     return category;
   }
 
+  async findAdminById(categoryId: string) {
+    const category = await this.prisma.category.findUnique({
+      where: { id: categoryId },
+      include: {
+        parent: { select: { id: true, name: true, slug: true } },
+        children: { select: { id: true, name: true, slug: true } },
+        _count: { select: { products: true } },
+      },
+    });
+    if (!category) {
+      throw new NotFoundException('Category not found.');
+    }
+    return category;
+  }
+
   async update(categoryId: string, updateCategoryDto: UpdateCategoryDto) {
     const existingCategory = await this.findById(categoryId);
 

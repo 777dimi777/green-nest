@@ -17,11 +17,15 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
+import { UserRole } from '@prisma/client';
+import { Roles } from '../auth/decorators/roles.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
 import type { AuthenticatedUser } from '../auth/interfaces/authenticated-user.interface';
 import { NotificationsQueryDto } from './dto/notifications-query.dto';
 import { NotificationsService } from './notifications.service';
+import { AdminNotificationsQueryDto } from './dto/admin-notifications-query.dto';
 
 @ApiTags('Notifications')
 @ApiBearerAuth()
@@ -29,6 +33,27 @@ import { NotificationsService } from './notifications.service';
 @Controller('notifications')
 export class NotificationsController {
   constructor(private readonly notificationsService: NotificationsService) {}
+
+  @Get('admin/all')
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Admin pregled svih notifikacija' })
+  @ApiOkResponse({
+    description: 'Paginirana lista notifikacija sa primaocima.',
+  })
+  findAllAdmin(@Query() query: AdminNotificationsQueryDto) {
+    return this.notificationsService.findAllAdmin(query);
+  }
+
+  @Get('admin/:id')
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Admin pregled jedne notifikacije' })
+  @ApiOkResponse({ description: 'Detalji notifikacije i primaoca.' })
+  @ApiNotFoundResponse({ description: 'Notifikacija nije pronađena.' })
+  findAdminById(@Param('id') notificationId: string) {
+    return this.notificationsService.findAdminById(notificationId);
+  }
 
   @Get('my')
   @ApiOperation({ summary: 'Pregled svojih notifikacija' })

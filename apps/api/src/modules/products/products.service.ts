@@ -10,6 +10,7 @@ import { PrismaService } from '../../database/prisma.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { ProductsQueryDto } from './dto/products-query.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
+import { AdminProductsQueryDto } from './dto/admin-products-query.dto';
 import {
   PRODUCT_UPLOAD_DIRECTORY,
   PRODUCT_UPLOAD_URL_PREFIX,
@@ -206,6 +207,72 @@ export class ProductsService {
         totalPages: Math.ceil(total / limit),
         hasPreviousPage: page > 1,
         hasNextPage: page * limit < total,
+      },
+    };
+  }
+
+  async findAllAdmin(query: AdminProductsQueryDto) {
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 12;
+    const sortBy = query.sortBy ?? 'createdAt';
+    const sortOrder = query.sortOrder ?? 'desc';
+    const where = {
+      ...(query.published !== undefined && { published: query.published }),
+      ...(query.search && {
+        OR: [
+          { name: { contains: query.search, mode: 'insensitive' as const } },
+          {
+            description: {
+              contains: query.search,
+              mode: 'insensitive' as const,
+            },
+          },
+          { sku: { contains: query.search, mode: 'insensitive' as const } },
+        ],
+      }),
+      ...(query.categoryId && { categoryId: query.categoryId }),
+      ...(query.featured !== undefined && { featured: query.featured }),
+      ...(query.inStock !== undefined && {
+        stock: query.inStock ? { gt: 0 } : { equals: 0 },
+      }),
+      ...(query.minPrice !== undefined || query.maxPrice !== undefined
+        ? {
+            price: {
+              ...(query.minPrice !== undefined && { gte: query.minPrice }),
+              ...(query.maxPrice !== undefined && { lte: query.maxPrice }),
+            },
+          }
+        : {}),
+    };
+
+    const [products, total] = await this.prisma.$transaction([
+      this.prisma.product.findMany({
+        where,
+        skip: (page - 1) * limit,
+        take: limit,
+        orderBy: { [sortBy]: sortOrder },
+        include: {
+          category: { select: { id: true, name: true, slug: true } },
+          images: {
+            where: { isPrimary: true },
+            orderBy: { createdAt: 'asc' },
+            take: 1,
+          },
+        },
+      }),
+      this.prisma.product.count({ where }),
+    ]);
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      data: products,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+        hasPreviousPage: page > 1,
+        hasNextPage: page < totalPages,
       },
     };
   }

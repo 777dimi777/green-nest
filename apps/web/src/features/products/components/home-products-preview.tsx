@@ -27,7 +27,7 @@ export function HomeProductsPreview() {
     return (
       <EmptyState
         icon={Sprout}
-        title="Izdvojeni proizvodi stižu uskoro"
+        title="Trenutno nema izdvojenih proizvoda"
         description="Trenutno nema proizvoda označenih kao izdvojeni."
         action={
           <Link href="/prodavnica" className={buttonVariants({ variant: "outline" })}>

@@ -1,7 +1,15 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { PaymentMethod, PaymentTransactionStatus } from '@prisma/client';
 import { Type } from 'class-transformer';
-import { IsEnum, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
+import {
+  IsEnum,
+  IsIn,
+  IsInt,
+  IsOptional,
+  IsString,
+  Max,
+  Min,
+} from 'class-validator';
 
 export class PaymentsQueryDto {
   @ApiPropertyOptional({
@@ -22,6 +30,21 @@ export class PaymentsQueryDto {
   @IsOptional()
   @IsEnum(PaymentMethod)
   method?: PaymentMethod;
+
+  @ApiPropertyOptional({ description: 'Filter po ID-u porudžbine.' })
+  @IsOptional()
+  @IsString()
+  orderId?: string;
+
+  @ApiPropertyOptional({ enum: ['createdAt', 'amount', 'status', 'method'] })
+  @IsOptional()
+  @IsIn(['createdAt', 'amount', 'status', 'method'])
+  sortBy?: 'createdAt' | 'amount' | 'status' | 'method';
+
+  @ApiPropertyOptional({ enum: ['asc', 'desc'] })
+  @IsOptional()
+  @IsIn(['asc', 'desc'])
+  sortOrder?: 'asc' | 'desc';
 
   @ApiPropertyOptional({ default: 1, minimum: 1 })
   @IsOptional()

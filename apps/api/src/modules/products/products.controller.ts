@@ -35,6 +35,7 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { ProductsQueryDto } from './dto/products-query.dto';
+import { AdminProductsQueryDto } from './dto/admin-products-query.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { UpdateProductStockDto } from './dto/update-product-stock.dto';
 import { UpdateProductPublishDto } from './dto/update-product-publish.dto';
@@ -87,6 +88,23 @@ export class ProductsController {
     query: ProductsQueryDto,
   ) {
     return this.productsService.findAll(query);
+  }
+  @Get('admin/all')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Admin list of all products',
+    description:
+      'Returns published and unpublished products with server-side filters.',
+  })
+  @ApiOkResponse({ description: 'Paginated admin product list.' })
+  @ApiUnauthorizedResponse({
+    description: 'Access token is missing or invalid.',
+  })
+  @ApiForbiddenResponse({ description: 'Administrator access is required.' })
+  findAllAdmin(@Query() query: AdminProductsQueryDto) {
+    return this.productsService.findAllAdmin(query);
   }
   @Get('admin/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
