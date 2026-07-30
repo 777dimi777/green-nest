@@ -58,6 +58,9 @@ export function MobileNavigation() {
           <SheetClose asChild>
             <Link className="text-sm font-medium" href="/korpa">Korpa</Link>
           </SheetClose>
+          <SheetClose asChild><Link className="text-sm font-medium" href="/porudzbine">Porudžbine</Link></SheetClose>
+          <SheetClose asChild><Link className="text-sm font-medium" href="/adrese">Adrese</Link></SheetClose>
+          <SheetClose asChild><Link className="text-sm font-medium" href="/notifikacije">Notifikacije</Link></SheetClose>
           <SheetClose asChild>
             <Link
               className="text-sm font-medium"

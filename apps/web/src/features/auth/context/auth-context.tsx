@@ -11,6 +11,9 @@ import { useQueryClient } from "@tanstack/react-query";
 import { cartQueryKeys } from "@/features/cart/queries/cart-query-keys";
 import { wishlistQueryKeys } from "@/features/wishlist/queries/wishlist-query-keys";
 import { reviewQueryKeys } from "@/features/reviews/queries/review-query-keys";
+import { addressQueryKeys } from "@/features/addresses/queries/address-query-keys";
+import { orderQueryKeys } from "@/features/orders/queries/order-query-keys";
+import { notificationQueryKeys } from "@/features/notifications/queries/notification-query-keys";
 import { authStorage } from "@/lib/auth/auth-storage";
 import type { LoginRequest, RegisterRequest } from "@/types/auth";
 import type { User } from "@/types/user";
@@ -82,6 +85,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       queryClient.removeQueries({ queryKey: cartQueryKeys.all });
       queryClient.removeQueries({ queryKey: wishlistQueryKeys.all });
       queryClient.removeQueries({ queryKey: reviewQueryKeys.all });
+      queryClient.removeQueries({ queryKey: addressQueryKeys.all });
+      queryClient.removeQueries({ queryKey: orderQueryKeys.all });
+      queryClient.removeQueries({ queryKey: notificationQueryKeys.all });
     }
   }, [queryClient]);
 

@@ -1,0 +1,1 @@
+import{PageContainer}from"@/components/common/page-container";import{ProtectedRoute}from"@/features/auth/components/protected-route";import{OrdersPage}from"@/features/orders/components/orders-page";export default function Page(){return <ProtectedRoute><PageContainer className="py-12"><OrdersPage/></PageContainer></ProtectedRoute>}
