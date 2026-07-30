@@ -51,6 +51,7 @@ export class UsersService {
       },
       omit: {
         password: true,
+        hashedRefreshToken: true,
       },
     });
   }

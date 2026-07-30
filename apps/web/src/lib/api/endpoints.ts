@@ -5,6 +5,9 @@ export const API_ENDPOINTS = {
     refresh: "/auth/refresh",
     logout: "/auth/logout",
   },
+  users: {
+    current: "/users/me",
+  },
   products: {
     root: "/products",
     bySlug: (slug: string) => `/products/${encodeURIComponent(slug)}`,
