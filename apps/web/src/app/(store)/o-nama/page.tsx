@@ -1,0 +1,3 @@
+import { PageContainer } from "@/components/common/page-container";
+export const metadata = { title: "O nama" };
+export default function AboutPage() { return <PageContainer className="py-20"><p className="text-xs font-semibold uppercase tracking-[.2em] text-primary">Green Nest</p><h1 className="mt-3 max-w-3xl font-serif text-5xl font-semibold sm:text-6xl">Zeleniji dom, uz manje nagađanja.</h1><p className="mt-7 max-w-2xl text-lg leading-8 text-muted-foreground">Gradimo mesto na kom je izbor biljke jednostavan, informacije o nezi razumljive, a kupovina mirna i pouzdana. Detaljna priča o brendu biće dopunjena kada sadržaj bude finalizovan.</p></PageContainer>; }
