@@ -79,3 +79,5 @@ body {
 }
 ::selection { background: color-mix(in srgb, var(--primary) 25%, transparent); }
 button, a, input { outline-color: var(--ring); }
+
+.skip-link{position:fixed;left:1rem;top:1rem;z-index:100;transform:translateY(-200%);border-radius:.5rem;background:var(--primary);color:var(--primary-foreground);padding:.75rem 1rem}.skip-link:focus{transform:translateY(0)}

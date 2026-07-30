@@ -79,3 +79,7 @@ export interface ProductsQuery {
   page?: number;
   limit?: number;
 }
+
+export interface AdminProductsQuery extends ProductsQuery {
+  published?: boolean;
+}

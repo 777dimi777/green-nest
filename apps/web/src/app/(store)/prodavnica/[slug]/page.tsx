@@ -1,21 +1,4 @@
-import type { Metadata } from "next";
-import { PageContainer } from "@/components/common/page-container";
-import { ProductDetailsView } from "@/features/products/components/product-details-view";
-
-export const metadata: Metadata = {
-  title: "Detalji proizvoda",
-  description: "Detalji proizvoda iz Green Nest kataloga.",
-};
-
-export default async function ProductPage({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}) {
-  const { slug } = await params;
-  return (
-    <PageContainer className="py-10 sm:py-14">
-      <ProductDetailsView slug={slug} />
-    </PageContainer>
-  );
-}
+import type{Metadata}from"next";import{PageContainer}from"@/components/common/page-container";import{ProductDetailsView}from"@/features/products/components/product-details-view";
+type ProductMeta={name:string;description:string;slug:string;images:{url:string;isPrimary:boolean}[]};async function getProduct(slug:string){try{const api=process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/,"");if(!api)return null;const response=await fetch(`${api}/products/${encodeURIComponent(slug)}`,{next:{revalidate:300}});if(!response.ok)return null;return await response.json() as ProductMeta}catch{return null}}
+export async function generateMetadata({params}:{params:Promise<{slug:string}>}):Promise<Metadata>{const{slug}=await params;const product=await getProduct(slug);if(!product)return{title:"Proizvod nije pronađen",robots:{index:false,follow:false}};const description=product.description.slice(0,160);const image=product.images.find(item=>item.isPrimary)?.url??product.images[0]?.url;return{title:product.name,description,alternates:{canonical:`/prodavnica/${encodeURIComponent(product.slug)}`},openGraph:{type:"website",title:product.name,description,...(image?{images:[{url:image,alt:product.name}]}:{})}}}
+export default async function ProductPage({params}:{params:Promise<{slug:string}>}){const{slug}=await params;return <PageContainer className="py-10 sm:py-14"><ProductDetailsView slug={slug}/></PageContainer>}

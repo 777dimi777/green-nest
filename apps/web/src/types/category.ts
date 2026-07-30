@@ -15,3 +15,8 @@ export interface Category extends CategorySummary {
     products: number;
   };
 }
+
+export interface AdminCategoryDetails extends Omit<Category, 'children'> {
+  parent: CategorySummary | null;
+  children: CategorySummary[];
+}
