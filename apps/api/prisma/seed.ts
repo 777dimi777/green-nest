@@ -330,6 +330,56 @@ async function main() {
       ? await prisma.product.update({ where: { id: existing.id }, data })
       : await prisma.product.create({ data });
     products.set(slug, { id: p.id, price: p.discountPrice ?? p.price });
+    const galleryCount = [
+      'monstera-deliciosa',
+      'ficus-lyrata',
+      'sansevieria-laurentii',
+      'aloe-vera',
+      'kaktus-golden-barrel',
+      'keramicka-saksija-nordic',
+    ].includes(slug)
+      ? 2
+      : 1;
+    const imageUrls = Array.from(
+      { length: galleryCount },
+      (_, index) => `/uploads/seed-products/${slug}-${index + 1}.png`,
+    );
+    const seedImages = await prisma.productImage.findMany({
+      where: {
+        productId: p.id,
+        url: { startsWith: '/uploads/seed-products/' },
+      },
+    });
+    const manualPrimary = await prisma.productImage.findFirst({
+      where: {
+        productId: p.id,
+        isPrimary: true,
+        url: { not: { startsWith: '/uploads/seed-products/' } },
+      },
+    });
+    for (const image of seedImages.filter(
+      (item) => !imageUrls.includes(item.url),
+    ))
+      await prisma.productImage.delete({ where: { id: image.id } });
+    for (const [index, url] of imageUrls.entries()) {
+      const image = await prisma.productImage.findFirst({
+        where: { productId: p.id, url },
+      });
+      const imageData = {
+        url,
+        alt: `${name} — fotografija ${index + 1}`,
+        isPrimary: !manualPrimary && index === 0,
+      };
+      if (image)
+        await prisma.productImage.update({
+          where: { id: image.id },
+          data: imageData,
+        });
+      else
+        await prisma.productImage.create({
+          data: { ...imageData, productId: p.id },
+        });
+    }
   }
   const addressData = [
     [

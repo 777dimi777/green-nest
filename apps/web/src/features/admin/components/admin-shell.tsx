@@ -8,7 +8,7 @@ import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { AccountMenu } from "@/features/auth/components/account-menu";
 import { cn } from "@/lib/utils/cn";
 
-const links=[["/admin",BarChart3,"Pregled"],["/admin/proizvodi",Boxes,"Proizvodi"],["/admin/kategorije",FolderTree,"Kategorije"],["/admin/porudzbine",Package,"PorudÅ¾bine"],["/admin/placanja",CreditCard,"PlaÄ‡anja"],["/admin/kuponi",FileBadge,"Kuponi"],["/admin/korisnici",UsersRound,"Korisnici"],["/admin/notifikacije",Bell,"Notifikacije"]] as const;
+const links=[["/admin",BarChart3,"Pregled"],["/admin/proizvodi",Boxes,"Proizvodi"],["/admin/kategorije",FolderTree,"Kategorije"],["/admin/porudzbine",Package,"Porudžbine"],["/admin/placanja",CreditCard,"Plaćanja"],["/admin/kuponi",FileBadge,"Kuponi"],["/admin/korisnici",UsersRound,"Korisnici"],["/admin/notifikacije",Bell,"Notifikacije"]] as const;
 
 export function AdminShell({children}:{children:React.ReactNode}){
  const path=usePathname();
