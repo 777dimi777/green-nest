@@ -293,7 +293,7 @@ function ProductForm({ product }: { product?: ProductDetails }) {
           <div className="mt-4 grid gap-4 sm:grid-cols-3">
             {product.images.map((image) => (
               <div key={image.id} className="rounded-xl border p-3">
-                <div className="aspect-square overflow-hidden rounded-lg bg-muted">
+                <div className="relative aspect-square overflow-hidden rounded-lg bg-muted">
                   <ProductImage
                     src={image.url}
                     alt={image.alt ?? product.name}

@@ -44,7 +44,7 @@ export function OrderDetailsPage({ id }: { id: string }) {
               key={i.id}
               className="grid grid-cols-[80px_1fr_auto] gap-4 rounded-xl border p-4"
             >
-              <div className="overflow-hidden rounded-lg bg-muted">
+              <div className="relative aspect-square overflow-hidden rounded-lg bg-muted">
                 <ProductImage
                   src={i.product.images[0]?.url}
                   alt={i.product.name}

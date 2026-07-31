@@ -76,7 +76,7 @@ export function CartPage() {
             >
               <Link
                 href={`/prodavnica/${item.product.slug}`}
-                className="block aspect-square overflow-hidden rounded-lg bg-muted"
+                className="relative block aspect-square overflow-hidden rounded-lg bg-muted"
               >
                 <ProductImage
                   src={item.product.images[0]?.url}

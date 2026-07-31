@@ -80,7 +80,7 @@ export function AdminOrderDetails({ id }: { id: string }) {
               key={i.id}
               className="grid grid-cols-[72px_1fr_auto] gap-4 rounded-xl border p-4"
             >
-              <div className="overflow-hidden rounded bg-muted">
+              <div className="relative aspect-square overflow-hidden rounded bg-muted">
                 <ProductImage
                   src={i.product.images[0]?.url}
                   alt={i.product.name}

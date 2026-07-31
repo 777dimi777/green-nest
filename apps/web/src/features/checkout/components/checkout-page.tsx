@@ -61,7 +61,7 @@ export function CheckoutPage() {
     try {
       await pay.mutateAsync({ orderId: order.id, method: "CASH_ON_DELIVERY" });
     } finally {
-      router.push(`/porudzbine/${order.id}`);
+      router.push("/porudzbine");
     }
   }
   return (
