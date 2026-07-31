@@ -1,2 +1,35 @@
-import Link from "next/link";import{Leaf}from"lucide-react";import{buttonVariants}from"@/components/ui/button";
-export default function NotFound(){return <main id="main-content" className="grid min-h-screen place-items-center px-4 text-center"><div><Leaf aria-hidden="true" className="mx-auto size-12 text-primary"/><p className="mt-6 text-sm font-semibold uppercase tracking-[.2em] text-primary">Greška 404</p><h1 className="mt-3 font-serif text-5xl font-semibold">Ova staza ne vodi do biljke.</h1><p className="mx-auto mt-4 max-w-lg text-muted-foreground">Stranica je premeštena, uklonjena ili ne postoji.</p><div className="mt-8 flex flex-wrap justify-center gap-3"><Link href="/" className={buttonVariants({size:"lg"})}>Početna</Link><Link href="/prodavnica" className={buttonVariants({size:"lg",variant:"outline"})}>Prodavnica</Link></div></div></main>}
+import Link from "next/link";
+import { Leaf } from "lucide-react";
+import { buttonVariants } from "@/components/ui/button";
+export default function NotFound() {
+  return (
+    <main
+      id="main-content"
+      className="grid min-h-screen place-items-center px-4 text-center"
+    >
+      <div>
+        <Leaf aria-hidden="true" className="mx-auto size-12 text-primary" />
+        <p className="mt-6 text-sm font-semibold uppercase tracking-[.2em] text-primary">
+          Greška 404
+        </p>
+        <h1 className="mt-3 font-serif text-5xl font-semibold">
+          Ova staza ne vodi do biljke.
+        </h1>
+        <p className="mx-auto mt-4 max-w-lg text-muted-foreground">
+          Stranica je premeštena, uklonjena ili ne postoji.
+        </p>
+        <div className="mt-8 flex flex-wrap justify-center gap-3">
+          <Link href="/" className={buttonVariants({ size: "lg" })}>
+            Početna
+          </Link>
+          <Link
+            href="/prodavnica"
+            className={buttonVariants({ size: "lg", variant: "outline" })}
+          >
+            Prodavnica
+          </Link>
+        </div>
+      </div>
+    </main>
+  );
+}

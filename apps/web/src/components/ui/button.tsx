@@ -7,9 +7,11 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground shadow-sm hover:opacity-90",
+        default:
+          "bg-primary text-primary-foreground shadow-sm hover:opacity-90",
         secondary: "bg-secondary text-secondary-foreground hover:opacity-85",
-        outline: "border bg-background/80 hover:bg-accent hover:text-accent-foreground",
+        outline:
+          "border bg-background/80 hover:bg-accent hover:text-accent-foreground",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         destructive: "bg-destructive text-white hover:opacity-90",
       },
@@ -24,9 +26,19 @@ const buttonVariants = cva(
   },
 );
 
-export function Button({ className, variant, size, ...props }:
-  React.ButtonHTMLAttributes<HTMLButtonElement> & VariantProps<typeof buttonVariants>) {
-  return <button className={cn(buttonVariants({ variant, size }), className)} {...props} />;
+export function Button({
+  className,
+  variant,
+  size,
+  ...props
+}: React.ButtonHTMLAttributes<HTMLButtonElement> &
+  VariantProps<typeof buttonVariants>) {
+  return (
+    <button
+      className={cn(buttonVariants({ variant, size }), className)}
+      {...props}
+    />
+  );
 }
 
 export { buttonVariants };
