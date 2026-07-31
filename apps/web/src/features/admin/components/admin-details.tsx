@@ -28,11 +28,23 @@ const nextStatus: Partial<Record<OrderStatus, OrderStatus>> = {
   CONFIRMED: "SHIPPED",
   SHIPPED: "DELIVERED",
 };
+const orderStatusLabels: Record<OrderStatus, string> = {
+  PENDING: "Na čekanju",
+  CONFIRMED: "Potvrđena",
+  SHIPPED: "Poslata",
+  DELIVERED: "Isporučena",
+  CANCELLED: "Otkazana",
+};
+const statusActionLabels: Partial<Record<OrderStatus, string>> = {
+  CONFIRMED: "Potvrdi porudžbinu",
+  SHIPPED: "Označi kao poslatu",
+  DELIVERED: "Označi kao isporučenu",
+};
 export function AdminOrderDetails({ id }: { id: string }) {
   const key = adminQueryKeys.orders.detail(id),
     q = useQuery({ queryKey: key, queryFn: () => adminApi.orders.detail(id) }),
-    status = useAction(key, adminApi.orders.status),
-    cancel = useAction(key, adminApi.orders.cancel);
+    status = useAction(adminQueryKeys.orders.all, adminApi.orders.status),
+    cancel = useAction(adminQueryKeys.orders.all, adminApi.orders.cancel);
   if (q.isPending) return <Skeleton className="h-96" />;
   if (q.isError)
     return (
@@ -54,10 +66,18 @@ export function AdminOrderDetails({ id }: { id: string }) {
         <div className="flex gap-2">
           {next && (
             <Button
-              disabled={status.isPending}
-              onClick={() => status.mutate({ id, status: next })}
+              disabled={status.isPending || cancel.isPending}
+              onClick={() => {
+                const message =
+                  next === "SHIPPED"
+                    ? "Potvrditi da je porudžbina predata pošti/kuriru?"
+                    : next === "DELIVERED"
+                      ? "Potvrditi da je porudžbina isporučena?"
+                      : "Potvrditi porudžbinu?";
+                if (confirm(message)) status.mutate({ id, status: next });
+              }}
             >
-              Postavi: {next}
+              {statusActionLabels[next]}
             </Button>
           )}
           {(o.status === "PENDING" || o.status === "CONFIRMED") && (
@@ -100,7 +120,7 @@ export function AdminOrderDetails({ id }: { id: string }) {
           <h2 className="font-serif text-2xl">Sažetak</h2>
           <Row l="Kupac" v={`${o.user.firstName} ${o.user.lastName}`} />
           <Row l="Email" v={o.user.email} />
-          <Row l="Status" v={o.status} />
+          <Row l="Status" v={orderStatusLabels[o.status]} />
           <Row l="Plaćanje" v={o.paymentStatus} />
           <Row l="Međuzbir" v={formatCurrency(o.subtotal)} />
           <Row l="Popust" v={formatCurrency(o.discount)} />

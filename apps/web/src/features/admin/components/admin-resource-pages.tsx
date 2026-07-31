@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { formatCurrency } from "@/lib/utils/currency";
 import { formatDate } from "@/lib/utils/date";
 import { getApiErrorMessage } from "@/lib/api/api-error";
+import type { OrderStatus } from "@/types/order";
 import { adminApi } from "../api/admin-api";
 import { adminQueryKeys } from "../queries/admin-query-keys";
 import { DataTable } from "./data-table";
@@ -23,8 +24,180 @@ export function AdminProducts(){const[search,setSearch]=useState(""),[published,
 
 export function AdminCategories(){const q=useQuery({queryKey:adminQueryKeys.categories.all,queryFn:adminApi.categories.list}),remove=useAdminMutation(adminQueryKeys.categories.all,adminApi.categories.remove);return <><Head title="Kategorije"><Link href="/admin/kategorije/nova" className={buttonVariants()}>Nova kategorija</Link></Head><State query={q}>{rows=><DataTable rows={rows} rowKey={r=>r.id} columns={[{key:"name",label:"Naziv",render:r=><Link className="font-medium text-primary" href={`/admin/kategorije/${r.id}`}>{r.name}</Link>},{key:"description",label:"Opis",render:r=>r.description??"—"},{key:"count",label:"Proizvodi",render:r=>r._count.products},{key:"actions",label:"",render:r=><Button variant="destructive" size="sm" disabled={remove.isPending} onClick={()=>{if(confirm("Obrisati kategoriju?"))remove.mutate(r.id)}}>Obriši</Button>}]}/>}</State></>}
 
-export function AdminOrders(){const[page,setPage]=useState(1),[statusFilter,setStatusFilter]=useState("");const q=useQuery({queryKey:adminQueryKeys.orders.list({page,statusFilter}),queryFn:()=>adminApi.orders.list({page,limit:10,status:statusFilter?statusFilter as "PENDING"|"CONFIRMED"|"SHIPPED"|"DELIVERED"|"CANCELLED":undefined})});return <><Head title="Porudžbine"><select aria-label="Filter statusa" className="h-10 rounded-md border bg-background px-3" value={statusFilter} onChange={e=>{setStatusFilter(e.target.value);setPage(1)}}><option value="">Svi statusi</option>{["PENDING","CONFIRMED","SHIPPED","DELIVERED","CANCELLED"].map(s=><option key={s}>{s}</option>)}</select></Head><State query={q}>{data=><><DataTable rows={data.data} rowKey={r=>r.id} columns={[{key:"number",label:"Broj",render:r=><Link className="font-medium text-primary" href={`/admin/porudzbine/${r.id}`}>{r.orderNumber}</Link>},{key:"user",label:"Kupac",render:r=>r.user.email},{key:"total",label:"Ukupno",render:r=>formatCurrency(r.totalPrice)},{key:"status",label:"Status",render:r=>r.status},{key:"payment",label:"Plaćanje",render:r=>r.paymentStatus},{key:"date",label:"Datum",render:r=>formatDate(r.createdAt)}]}/><Pager page={data.pagination.page} totalPages={data.pagination.totalPages} onPage={setPage}/></>}</State></>}
+const orderStatusLabels: Record<OrderStatus, string> = {
+  PENDING: "Na čekanju",
+  CONFIRMED: "Potvrđena",
+  SHIPPED: "Poslata",
+  DELIVERED: "Isporučena",
+  CANCELLED: "Otkazana",
+};
 
+const nextOrderStatus: Partial<Record<OrderStatus, OrderStatus>> = {
+  PENDING: "CONFIRMED",
+  CONFIRMED: "SHIPPED",
+  SHIPPED: "DELIVERED",
+};
+
+const orderActionLabels: Partial<Record<OrderStatus, string>> = {
+  CONFIRMED: "Potvrdi",
+  SHIPPED: "Označi kao poslatu",
+  DELIVERED: "Označi kao isporučenu",
+};
+
+export function AdminOrders() {
+  const [page, setPage] = useState(1);
+  const [statusFilter, setStatusFilter] = useState("");
+  const query = {
+    page,
+    statusFilter,
+  };
+  const q = useQuery({
+    queryKey: adminQueryKeys.orders.list(query),
+    queryFn: () =>
+      adminApi.orders.list({
+        page,
+        limit: 10,
+        status: statusFilter ? (statusFilter as OrderStatus) : undefined,
+      }),
+  });
+  const changeStatus = useAdminMutation(
+    adminQueryKeys.orders.all,
+    adminApi.orders.status,
+  );
+  const cancel = useAdminMutation(
+    adminQueryKeys.orders.all,
+    adminApi.orders.cancel,
+  );
+
+  return (
+    <>
+      <Head title="Porudžbine">
+        <select
+          aria-label="Filter statusa"
+          className="h-10 rounded-md border bg-background px-3"
+          value={statusFilter}
+          onChange={(event) => {
+            setStatusFilter(event.target.value);
+            setPage(1);
+          }}
+        >
+          <option value="">Svi statusi</option>
+          {(Object.keys(orderStatusLabels) as OrderStatus[]).map((status) => (
+            <option key={status} value={status}>
+              {orderStatusLabels[status]}
+            </option>
+          ))}
+        </select>
+      </Head>
+      <State query={q}>
+        {(data) => (
+          <>
+            <DataTable
+              rows={data.data}
+              rowKey={(order) => order.id}
+              columns={[
+                {
+                  key: "number",
+                  label: "Broj",
+                  render: (order) => (
+                    <Link
+                      className="font-medium text-primary"
+                      href={`/admin/porudzbine/${order.id}`}
+                    >
+                      {order.orderNumber}
+                    </Link>
+                  ),
+                },
+                {
+                  key: "user",
+                  label: "Kupac",
+                  render: (order) => order.user.email,
+                },
+                {
+                  key: "total",
+                  label: "Ukupno",
+                  render: (order) => formatCurrency(order.totalPrice),
+                },
+                {
+                  key: "status",
+                  label: "Status",
+                  render: (order) => orderStatusLabels[order.status],
+                },
+                {
+                  key: "payment",
+                  label: "Plaćanje",
+                  render: (order) => order.paymentStatus,
+                },
+                {
+                  key: "date",
+                  label: "Datum",
+                  render: (order) => formatDate(order.createdAt),
+                },
+                {
+                  key: "actions",
+                  label: "Akcije",
+                  render: (order) => {
+                    const next = nextOrderStatus[order.status];
+                    return (
+                      <div className="flex flex-wrap gap-2">
+                        {next && (
+                          <Button
+                            size="sm"
+                            disabled={
+                              changeStatus.isPending || cancel.isPending
+                            }
+                            onClick={() => {
+                              const message =
+                                next === "SHIPPED"
+                                  ? "Potvrditi da je porudžbina predata pošti/kuriru?"
+                                  : next === "DELIVERED"
+                                    ? "Potvrditi da je porudžbina isporučena?"
+                                    : "Potvrditi porudžbinu?";
+                              if (confirm(message)) {
+                                changeStatus.mutate({
+                                  id: order.id,
+                                  status: next,
+                                });
+                              }
+                            }}
+                          >
+                            {orderActionLabels[next]}
+                          </Button>
+                        )}
+                        {(order.status === "PENDING" ||
+                          order.status === "CONFIRMED") && (
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            disabled={
+                              changeStatus.isPending || cancel.isPending
+                            }
+                            onClick={() => {
+                              if (confirm("Otkazati porudžbinu?")) {
+                                cancel.mutate(order.id);
+                              }
+                            }}
+                          >
+                            Otkaži
+                          </Button>
+                        )}
+                      </div>
+                    );
+                  },
+                },
+              ]}
+            />
+            <Pager
+              page={data.pagination.page}
+              totalPages={data.pagination.totalPages}
+              onPage={setPage}
+            />
+          </>
+        )}
+      </State>
+    </>
+  );
+}
 export function AdminPayments(){const[page,setPage]=useState(1),[status,setStatus]=useState("");const q=useQuery({queryKey:adminQueryKeys.payments.list({page,status}),queryFn:()=>adminApi.payments.list({page,limit:10,status:status?status as "PENDING"|"COMPLETED"|"FAILED"|"REFUNDED":undefined})});return <><Head title="Plaćanja"><select aria-label="Filter statusa plaćanja" className="h-10 rounded-md border bg-background px-3" value={status} onChange={e=>{setStatus(e.target.value);setPage(1)}}><option value="">Svi statusi</option>{["PENDING","COMPLETED","FAILED","REFUNDED"].map(s=><option key={s}>{s}</option>)}</select></Head><State query={q}>{data=><><DataTable rows={data.data} rowKey={r=>r.id} columns={[{key:"id",label:"Transakcija",render:r=><Link className="font-medium text-primary" href={`/admin/placanja/${r.id}`}>{r.providerTransactionId??r.id}</Link>},{key:"method",label:"Metoda",render:r=>r.method},{key:"status",label:"Status",render:r=>r.status},{key:"amount",label:"Iznos",render:r=>formatCurrency(r.amount)},{key:"date",label:"Datum",render:r=>formatDate(r.createdAt)}]}/><Pager page={data.pagination.page} totalPages={data.pagination.totalPages} onPage={setPage}/></>}</State></>}
 
 export function AdminCoupons(){const[search,setSearch]=useState(""),[active,setActive]=useState(""),[type,setType]=useState(""),[page,setPage]=useState(1);const query={search:search||undefined,active:active===""?undefined:active==="true",type:type?type as "PERCENTAGE"|"FIXED":undefined,page,limit:10};const q=useQuery({queryKey:adminQueryKeys.coupons.list(query),queryFn:()=>adminApi.coupons.list(query)}),remove=useAdminMutation(adminQueryKeys.coupons.all,adminApi.coupons.remove);return <><Head title="Kuponi"><Link href="/admin/kuponi/novi" className={buttonVariants()}>Novi kupon</Link></Head><div className="mb-5 grid gap-3 sm:grid-cols-3"><label className="text-sm">Pretraga<Input value={search} onChange={e=>{setSearch(e.target.value);setPage(1)}} placeholder="Kod kupona"/></label><label className="text-sm">Aktivnost<select className="mt-1 h-10 w-full rounded-md border bg-background px-3" value={active} onChange={e=>{setActive(e.target.value);setPage(1)}}><option value="">Svi</option><option value="true">Aktivni</option><option value="false">Neaktivni</option></select></label><label className="text-sm">Tip<select className="mt-1 h-10 w-full rounded-md border bg-background px-3" value={type} onChange={e=>{setType(e.target.value);setPage(1)}}><option value="">Svi tipovi</option><option value="PERCENTAGE">Procenat</option><option value="FIXED">Fiksni</option></select></label></div><State query={q}>{result=><><DataTable rows={result.data} rowKey={r=>r.id} columns={[{key:"code",label:"Kod",render:r=><Link className="font-semibold text-primary" href={`/admin/kuponi/${r.id}`}>{r.code}</Link>},{key:"discount",label:"Popust",render:r=>r.percentage?`${r.percentage}%`:formatCurrency(r.fixedAmount??0)},{key:"usage",label:"Korišćenje",render:r=>`${r.usedCount}/${r.usageLimit??"∞"}`},{key:"active",label:"Status",render:r=>r.active?"Aktivan":"Neaktivan"},{key:"expires",label:"Ističe",render:r=>r.expiresAt?formatDate(r.expiresAt):"—"},{key:"actions",label:"Akcije",render:r=><Button size="sm" variant="destructive" disabled={remove.isPending} onClick={()=>{if(confirm("Obrisati kupon?"))remove.mutate(r.id)}}>Obriši</Button>}]}/><Pager page={result.pagination.page} totalPages={result.pagination.totalPages} onPage={setPage}/></>}</State></>}
