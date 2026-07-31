@@ -1,7 +1,15 @@
 import type { NextConfig } from "next";
 
-const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api";
-const api = new URL(apiUrl);
+function getApiUrl() {
+  const configured = process.env.NEXT_PUBLIC_API_URL?.trim();
+  if (configured) return new URL(configured);
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("NEXT_PUBLIC_API_URL is required for production builds.");
+  }
+  return new URL("http://localhost:3001/api");
+}
+
+const api = getApiUrl();
 
 const nextConfig: NextConfig = {
   reactCompiler: true,

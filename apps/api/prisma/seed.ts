@@ -13,9 +13,19 @@ const prisma = new PrismaClient();
 const d = (days: number) => new Date(Date.now() + days * 86400000);
 const decimal = (value: number) => new Prisma.Decimal(value);
 async function main() {
+  const production = process.env.NODE_ENV === 'production';
+  const adminPassword =
+    process.env.SEED_ADMIN_PASSWORD ?? (production ? null : 'Admin123!');
+  const userPassword =
+    process.env.SEED_USER_PASSWORD ?? (production ? null : 'User123!');
+  if (!adminPassword || !userPassword) {
+    throw new Error(
+      'Production seed requires SEED_ADMIN_PASSWORD and SEED_USER_PASSWORD.',
+    );
+  }
   const [adminHash, userHash] = await Promise.all([
-    bcrypt.hash('Admin123!', 10),
-    bcrypt.hash('User123!', 10),
+    bcrypt.hash(adminPassword, 10),
+    bcrypt.hash(userPassword, 10),
   ]);
   const users = await Promise.all(
     [

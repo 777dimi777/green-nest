@@ -1,1 +1,37 @@
-import type{MetadataRoute}from"next";type Product={slug:string;updatedAt?:string};type Response={data:Product[]};export default async function sitemap():Promise<MetadataRoute.Sitemap>{const base=(process.env.NEXT_PUBLIC_APP_URL||"http://localhost:3000").replace(/\/$/,"");const staticRoutes=["","/prodavnica","/kategorije","/o-nama"].map(path=>({url:`${base}${path}`,changeFrequency:"weekly" as const,priority:path===""?1:.8}));try{const api=(process.env.NEXT_PUBLIC_API_URL||"").replace(/\/$/,"");if(!api)return staticRoutes;const response=await fetch(`${api}/products?limit=100&sortBy=createdAt&sortOrder=desc`,{next:{revalidate:3600}});if(!response.ok)return staticRoutes;const payload=await response.json() as Response;return[...staticRoutes,...payload.data.map(product=>({url:`${base}/prodavnica/${encodeURIComponent(product.slug)}`,lastModified:product.updatedAt?new Date(product.updatedAt):undefined,changeFrequency:"weekly" as const,priority:.7}))]}catch{return staticRoutes}}
+import type { MetadataRoute } from "next";
+import { env } from "@/lib/env";
+
+type Product = { slug: string; updatedAt?: string };
+type Response = { data: Product[] };
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const staticRoutes = ["", "/prodavnica", "/kategorije", "/o-nama"].map(
+    (route) => ({
+      url: `${env.appUrl}${route}`,
+      changeFrequency: "weekly" as const,
+      priority: route === "" ? 1 : 0.8,
+    }),
+  );
+
+  try {
+    const response = await fetch(
+      `${env.apiUrl}/products?limit=100&sortBy=createdAt&sortOrder=desc`,
+      { next: { revalidate: 3600 } },
+    );
+    if (!response.ok) return staticRoutes;
+    const payload = (await response.json()) as Response;
+    return [
+      ...staticRoutes,
+      ...payload.data.map((product) => ({
+        url: `${env.appUrl}/prodavnica/${encodeURIComponent(product.slug)}`,
+        lastModified: product.updatedAt
+          ? new Date(product.updatedAt)
+          : undefined,
+        changeFrequency: "weekly" as const,
+        priority: 0.7,
+      })),
+    ];
+  } catch {
+    return staticRoutes;
+  }
+}

@@ -1,54 +1,47 @@
 # Green Nest
 
-Green Nest is a full-stack e-commerce portfolio application for browsing and purchasing ornamental plants. It combines a responsive Serbian storefront with authenticated customer workflows and a guarded administration area.
+Green Nest is a production-oriented full-stack e-commerce portfolio application for ornamental plants. It combines a responsive Serbian storefront, authenticated customer workflows, cash-on-delivery checkout, local media assets, and a role-protected administration area.
 
-## Screenshots
+## Highlights
 
-Screenshots can be added after deploying the application. The repository does not currently include production screenshots.
+- Responsive storefront with catalog search, filters, sorting, pagination, categories, product galleries, and plant-care details
+- JWT authentication with access and refresh tokens
+- Persistent cart, wishlist, address book, coupons, order history, reviews, and notifications
+- Cash-on-delivery checkout with stock validation and order snapshots
+- Admin management for products, images, categories, coupons, orders, payments, users, and notifications
+- Admin analytics for revenue, users, orders, stock, coupons, and payment outcomes
+- Six seeded categories, 18 seeded products, local category/product imagery, and deterministic demo data
+- Health endpoint, request validation, throttled authentication, Helmet, CORS allow-listing, and Swagger feature flag
 
-## Features
+## Stack
 
-- Responsive storefront, catalog search, filters, sorting and pagination
-- Product details, plant-care attributes, stock information and reviews
-- JWT authentication with access-token refresh
-- Wishlist, persistent cart and address management
-- Checkout with coupons, cash on delivery and mock card payments
-- Order history, order details and permitted cancellation flows
-- Customer and administrator notifications
-- Admin product, image, category, coupon, order, payment and user management
-- Admin analytics dashboard
+| Layer | Technology |
+| --- | --- |
+| Web | Next.js 16, React 19, TypeScript, Tailwind CSS, TanStack Query, Axios, React Hook Form, Zod, Recharts |
+| API | NestJS 11, Prisma 6, PostgreSQL, Passport JWT, class-validator, Helmet, Multer |
+| Development | Docker Compose, Jest, ESLint, Prettier, Swagger/OpenAPI |
 
-## Technology
-
-- **Web:** Next.js 16, React 19, TypeScript, Tailwind CSS, TanStack Query, Axios, React Hook Form, Zod and Recharts
-- **API:** NestJS 11, Prisma 6, PostgreSQL, Passport JWT, class-validator, Helmet and throttling
-- **Development:** Docker Compose, Jest, ESLint and Swagger/OpenAPI
-
-## Architecture
+## Repository structure
 
 ```text
-apps/web  -> Next.js storefront and administration UI
-apps/api  -> NestJS REST API and Prisma data layer
-PostgreSQL -> application database
+apps/web                 Next.js storefront and administration UI
+apps/api                 NestJS REST API and Prisma schema
+apps/api/prisma          migrations and deterministic development seed
+apps/api/uploads         committed seed assets and runtime product uploads
+docker-compose.yml       local PostgreSQL 16
 ```
-
-The API is organized into authentication, users, products, categories, wishlist, reviews, cart, addresses, coupons, orders, payments, notifications, analytics and health modules.
-
-## Prerequisites
-
-- Node.js 20 or newer
-- npm
-- Docker Desktop, or a compatible PostgreSQL 16 installation
 
 ## Local setup
 
-1. Start PostgreSQL:
+Prerequisites: Node.js 20+, npm, and Docker Desktop or PostgreSQL 16.
+
+1. Start PostgreSQL from the repository root:
 
    ```bash
    docker compose up -d postgres
    ```
 
-2. Create environment files:
+2. Create local environment files:
 
    ```bash
    cp apps/api/.env.example apps/api/.env
@@ -62,108 +55,125 @@ The API is organized into authentication, users, products, categories, wishlist,
    cd ../web && npm install
    ```
 
-4. Apply migrations and generate Prisma Client:
+4. Prepare the local database:
 
    ```bash
    cd apps/api
    npx prisma migrate dev
-   npx prisma generate
+   npx prisma db seed
    ```
 
-5. Run the API:
+5. Start both applications in separate terminals:
 
    ```bash
-   cd apps/api
-   npm run start:dev
+   cd apps/api && npm run start:dev
+   cd apps/web && npm run dev
    ```
 
-6. Run the web app in another terminal:
+Local URLs:
 
-   ```bash
-   cd apps/web
-   npm run dev
-   ```
-
-The storefront is available at `http://localhost:3000`. API documentation is available at `http://localhost:3001/api/docs` only when `SWAGGER_ENABLED=true`.
+- Storefront: `http://localhost:3000`
+- API: `http://localhost:3001/api`
+- Health: `http://localhost:3001/api/health`
+- Swagger: `http://localhost:3001/api/docs` when `SWAGGER_ENABLED=true`
 
 ## Environment
 
-The web app requires `NEXT_PUBLIC_API_URL` and `NEXT_PUBLIC_APP_URL`. The API requires `DATABASE_URL`, separate access and refresh JWT secrets and expiry values, `PORT`, and `CORS_ORIGIN`. See both `.env.example` files for the complete development templates. Never commit real secrets.
+### API — `apps/api/.env`
 
-## Validation and tests
+| Variable | Required | Purpose |
+| --- | --- | --- |
+| `NODE_ENV` | yes | use `production` on Render |
+| `DATABASE_URL` | yes | PostgreSQL connection URL |
+| `JWT_SECRET` | yes | access-token signing secret, minimum 32 characters |
+| `JWT_EXPIRES_IN` | yes | access-token lifetime, for example `15m` |
+| `JWT_REFRESH_SECRET` | yes | different refresh-token secret, minimum 32 characters |
+| `JWT_REFRESH_EXPIRES_IN` | yes | refresh-token lifetime, for example `7d` |
+| `PORT` | yes | API listening port; hosting platforms may inject it |
+| `CORS_ORIGIN` | yes | comma-separated exact frontend origins |
+| `SWAGGER_ENABLED` | yes | use `false` in production unless docs should be public |
+| `SEED_ADMIN_PASSWORD` | production seed only | non-public admin password |
+| `SEED_USER_PASSWORD` | production seed only | non-public demo-user password |
 
-```bash
-cd apps/web
-npm run lint
-npm run build
+### Web — `apps/web/.env.local`
 
-cd ../api
-npm run lint
-npm run build
-npm test
-npm run test:e2e
-npx prisma validate
-```
+| Variable | Required | Purpose |
+| --- | --- | --- |
+| `NEXT_PUBLIC_API_URL` | yes | public HTTPS API URL including `/api` |
+| `NEXT_PUBLIC_APP_URL` | yes | public HTTPS frontend URL |
 
-## Development seed data
+Production builds fail fast when required public URLs are missing. Never commit real secrets or production database credentials.
 
-Run the deterministic development seed after applying migrations:
+## Demo seed
 
-```bash
-cd apps/api
-npx prisma db seed
-```
-
-The command is idempotent and updates only stable Green Nest demo records. It does not truncate or reset the database.
-
-### Local test accounts
+`npx prisma db seed` is idempotent and synchronizes only stable Green Nest demo records. It does not truncate the database.
 
 | Role | Email | Password |
 | --- | --- | --- |
 | Administrator | `admin@greennest.test` | `Admin123!` |
 | Customer | `milos@greennest.test` | `User123!` |
-| Second customer | `ana@greennest.test` | `User123!` |
+| Customer | `ana@greennest.test` | `User123!` |
 | Customer without orders | `novi@greennest.test` | `User123!` |
 
-These credentials are for local development and demos only. Production must use different credentials, and the seed must never run automatically in production unless that is explicitly intended.
+Demo coupons: `WELCOME10`, `SAVE500`, `EXPIRED20`, `INACTIVE15`, `LIMIT1`, and `MINIMUM`.
 
-### Test coupons
+These credentials are local-development defaults only. With `NODE_ENV=production`, the seed refuses to run unless `SEED_ADMIN_PASSWORD` and `SEED_USER_PASSWORD` are provided. Do not run the seed against a real customer database without explicitly accepting that demo accounts and records will be created.
 
-- `WELCOME10` — active 10% discount with a 1,500 RSD minimum.
-- `SAVE500` — active fixed 500 RSD discount with a 3,000 RSD minimum.
-- `EXPIRED20` — expired percentage coupon.
-- `INACTIVE15` — inactive coupon.
-- `LIMIT1` — usage limit already reached.
-- `MINIMUM` — active coupon with a deliberately high 50,000 RSD minimum.
+## Images and uploads
 
-The seed also creates published and unpublished products, discounted and featured products, out-of-stock and low-stock cases, all supported order/payment statuses, reviews, wishlists, carts and read/unread notifications. Product image records are intentionally not seeded because the repository does not contain stable local product image assets.
+- Seed category images: `apps/api/uploads/seed-categories`
+- Seed product images: `apps/api/uploads/seed-products`
+- Runtime admin uploads: `apps/api/uploads/products`
+- Public URL prefix: `/uploads`
+
+The API accepts one JPEG, PNG, or WebP product image at a time, up to 5 MB. Upload endpoints require both JWT authentication and the `ADMIN` role.
+
+The current local-disk architecture is intentionally retained for this portfolio. On Render or Railway, new runtime uploads require a persistent disk mounted so that `apps/api/uploads` remains durable. Without persistent storage, committed seed images work after each deploy, but newly uploaded files can disappear after restart or redeploy.
+
+## Validation
+
+Run the final checks from each workspace:
+
+```bash
+cd apps/api
+npm run lint
+npm run build
+npm test
+npx prisma validate
+npx prisma generate
+
+cd ../web
+npm run lint
+npm run build
+
+cd ../..
+git diff --check
+```
 
 ## Production deployment
 
-- Build the web app with production `NEXT_PUBLIC_API_URL` and `NEXT_PUBLIC_APP_URL` values.
-- Configure strong, distinct JWT secrets and an exact production CORS origin.
-- Disable Swagger unless it is intentionally exposed.
-- Run `npx prisma migrate deploy` during API deployment; do not use `prisma db push` in production.
-- Run the API with `npm run start:prod` after `npm run build`.
-- Run the web app with `npm run start` after `npm run build`.
-- Use HTTPS for both public services and protect environment values in the hosting platform.
+For production, use committed migrations only:
 
-### Upload storage limitation
+```bash
+cd apps/api
+npx prisma migrate deploy
+```
 
-Product images are currently stored on the API server's local disk and served from `/uploads`. Ephemeral platforms can remove those files during a restart or redeploy. Production should use a persistent volume or move uploads to an object-storage service such as Amazon S3 or Cloudinary.
+Do not use `prisma db push`, `prisma migrate dev`, or `prisma migrate reset` in production.
+
+Recommended Render + Vercel topology:
+
+- Render PostgreSQL
+- Render Web Service for `apps/api`
+- Optional Render persistent disk for runtime uploads
+- Vercel project rooted at `apps/web`
+
+Set `SWAGGER_ENABLED=false`, use strong and distinct JWT secrets, set exact HTTPS CORS origins, and run the optional seed only for a portfolio/demo environment.
 
 ## Security notes
 
-The API applies DTO validation, property whitelisting, role guards, Helmet, CORS restrictions and request throttling. The browser currently stores JWTs in local storage; this is a documented portfolio tradeoff and requires strong Content Security Policy and careful XSS prevention in deployment. No user-controlled HTML is rendered directly.
+The API uses DTO whitelisting, rejection of unknown properties, JWT and role guards, auth throttling, Helmet, exact CORS origins, randomized upload filenames, file size/type checks, and startup environment validation. JWTs are stored in browser local storage; this is an accepted portfolio trade-off, but HttpOnly secure cookies and stronger CSP are recommended for a future real-commerce release.
 
-## Future improvements
+## Portfolio status
 
-- External object storage and image transformations
-- HttpOnly cookie-based authentication
-- Transactional email and a real payment provider
-- Automated browser end-to-end tests and deployment pipeline
-- Production monitoring and structured logging
-
-## Author
-
-Built as a full-stack portfolio project. Add the repository owner's name and contact links before publishing the portfolio.
+The application is intended as a polished portfolio project. Cash on delivery is the only customer-facing payment method; no card details are collected or processed.

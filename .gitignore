@@ -25,3 +25,6 @@ yarn-error.log*
 .vscode/
 .DS_Store
 Thumbs.db
+# Runtime uploads (seed assets remain tracked)
+apps/api/uploads/products/*
+!apps/api/uploads/products/.gitkeep

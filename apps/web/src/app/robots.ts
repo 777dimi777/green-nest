@@ -1,1 +1,21 @@
-import type{MetadataRoute}from"next";export default function robots():MetadataRoute.Robots{const base=process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/,"")||"http://localhost:3000";return{rules:{userAgent:"*",allow:"/",disallow:["/admin","/nalog","/korpa","/lista-zelja","/checkout","/porudzbine","/adrese"]},sitemap:`${base}/sitemap.xml`}}
+import type { MetadataRoute } from "next";
+import { env } from "@/lib/env";
+
+export default function robots(): MetadataRoute.Robots {
+  return {
+    rules: {
+      userAgent: "*",
+      allow: "/",
+      disallow: [
+        "/admin",
+        "/nalog",
+        "/korpa",
+        "/lista-zelja",
+        "/checkout",
+        "/porudzbine",
+        "/adrese",
+      ],
+    },
+    sitemap: `${env.appUrl}/sitemap.xml`,
+  };
+}
