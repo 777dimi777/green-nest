@@ -6,6 +6,7 @@ const api = new URL(apiUrl);
 const nextConfig: NextConfig = {
   reactCompiler: true,
   images: {
+    dangerouslyAllowLocalIP: process.env.NODE_ENV === "development",
     remotePatterns: [
       {
         protocol: api.protocol.replace(":", "") as "http" | "https",
