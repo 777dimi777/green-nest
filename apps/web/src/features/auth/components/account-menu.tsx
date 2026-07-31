@@ -4,11 +4,7 @@ import Link from "next/link";
 import { LayoutDashboard, LogOut, UserRound } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,

@@ -1,1 +1,1 @@
-export const addressQueryKeys={all:["addresses"] as const};
+export const addressQueryKeys = { all: ["addresses"] as const };

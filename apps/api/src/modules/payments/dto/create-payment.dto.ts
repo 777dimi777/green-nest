@@ -1,22 +1,12 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 import { PaymentMethod } from '@prisma/client';
-import { IsBoolean, IsEnum, IsOptional } from 'class-validator';
-
+import { Equals } from 'class-validator';
 export class CreatePaymentDto {
   @ApiProperty({
-    enum: PaymentMethod,
-    example: PaymentMethod.CARD,
-    description: 'Način plaćanja.',
+    enum: [PaymentMethod.CASH_ON_DELIVERY],
+    example: PaymentMethod.CASH_ON_DELIVERY,
+    description: 'Green Nest prihvata isključivo plaćanje pouzećem.',
   })
-  @IsEnum(PaymentMethod)
+  @Equals(PaymentMethod.CASH_ON_DELIVERY)
   method!: PaymentMethod;
-
-  @ApiPropertyOptional({
-    example: false,
-    default: false,
-    description: 'Simulira neuspešno CARD plaćanje.',
-  })
-  @IsOptional()
-  @IsBoolean()
-  simulateFailure?: boolean;
 }

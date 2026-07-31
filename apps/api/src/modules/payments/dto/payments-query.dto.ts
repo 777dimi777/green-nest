@@ -13,7 +13,7 @@ import {
 
 export class PaymentsQueryDto {
   @ApiPropertyOptional({
-    example: 'MOCK-CARD',
+    example: 'GN-PAY-001',
     description:
       'Pretraga po provider transakciji, broju porudžbine ili email-u.',
   })

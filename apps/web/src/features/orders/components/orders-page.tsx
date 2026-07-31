@@ -1,3 +1,79 @@
-"use client";import Link from"next/link";import{Package}from"lucide-react";import{EmptyState}from"@/components/common/empty-state";import{ErrorState}from"@/components/common/error-state";import{Skeleton}from"@/components/ui/skeleton";import{buttonVariants}from"@/components/ui/button";import{formatCurrency}from"@/lib/utils/currency";import{formatDate}from"@/lib/utils/date";import{getApiErrorMessage}from"@/lib/api/api-error";import{useOrders}from"../hooks/use-orders";
-export function OrdersPage(){const q=useOrders();if(q.isPending)return <Skeleton className="h-80"/>;if(q.isError)return <ErrorState title="Porudžbine nisu dostupne" description={getApiErrorMessage(q.error)} onRetry={()=>void q.refetch()}/>;return <><h1 className="font-serif text-5xl font-semibold">Porudžbine</h1><p className="mt-2 text-muted-foreground">Istorija vaših kupovina.</p>{q.data.length===0?<div className="mt-8"><EmptyState icon={Package} title="Još nema porudžbina" description="Vaše buduće porudžbine pojaviće se ovde." action={<Link href="/prodavnica" className={buttonVariants()}>Prodavnica</Link>}/></div>:<div className="mt-8 space-y-4">{q.data.map(o=><Link key={o.id} href={`/porudzbine/${o.id}`} className="grid gap-3 rounded-xl border p-5 transition hover:bg-muted/40 sm:grid-cols-[1fr_auto_auto]"><div><strong>{o.orderNumber}</strong><p className="text-sm text-muted-foreground">{formatDate(o.createdAt)} · {o.items.length} stavki</p></div><Status value={o.status}/><strong>{formatCurrency(o.totalPrice)}</strong></Link>)}</div>}</>}
-export function Status({value}:{value:string}){const labels:Record<string,string>={PENDING:"Na čekanju",CONFIRMED:"Potvrđena",SHIPPED:"Poslata",DELIVERED:"Isporučena",CANCELLED:"Otkazana",PAID:"Plaćeno",FAILED:"Neuspešno",REFUNDED:"Refundirano"};return <span className="h-fit w-fit rounded-full bg-secondary px-3 py-1 text-xs font-semibold">{labels[value]??value}</span>}
+"use client";
+import Link from "next/link";
+import { Package } from "lucide-react";
+import { EmptyState } from "@/components/common/empty-state";
+import { ErrorState } from "@/components/common/error-state";
+import { Skeleton } from "@/components/ui/skeleton";
+import { buttonVariants } from "@/components/ui/button";
+import { formatCurrency } from "@/lib/utils/currency";
+import { formatDate } from "@/lib/utils/date";
+import { getApiErrorMessage } from "@/lib/api/api-error";
+import { useOrders } from "../hooks/use-orders";
+export function OrdersPage() {
+  const q = useOrders();
+  if (q.isPending) return <Skeleton className="h-80" />;
+  if (q.isError)
+    return (
+      <ErrorState
+        title="Porudžbine nisu dostupne"
+        description={getApiErrorMessage(q.error)}
+        onRetry={() => void q.refetch()}
+      />
+    );
+  return (
+    <>
+      <h1 className="font-serif text-5xl font-semibold">Porudžbine</h1>
+      <p className="mt-2 text-muted-foreground">Istorija vaših kupovina.</p>
+      {q.data.length === 0 ? (
+        <div className="mt-8">
+          <EmptyState
+            icon={Package}
+            title="Još nema porudžbina"
+            description="Vaše buduće porudžbine pojaviće se ovde."
+            action={
+              <Link href="/prodavnica" className={buttonVariants()}>
+                Prodavnica
+              </Link>
+            }
+          />
+        </div>
+      ) : (
+        <div className="mt-8 space-y-4">
+          {q.data.map((o) => (
+            <Link
+              key={o.id}
+              href={`/porudzbine/${o.id}`}
+              className="grid gap-3 rounded-xl border p-5 transition hover:bg-muted/40 sm:grid-cols-[1fr_auto_auto]"
+            >
+              <div>
+                <strong>{o.orderNumber}</strong>
+                <p className="text-sm text-muted-foreground">
+                  {formatDate(o.createdAt)} · {o.items.length} stavki
+                </p>
+              </div>
+              <Status value={o.status} />
+              <strong>{formatCurrency(o.totalPrice)}</strong>
+            </Link>
+          ))}
+        </div>
+      )}
+    </>
+  );
+}
+export function Status({ value }: { value: string }) {
+  const labels: Record<string, string> = {
+    PENDING: "Na čekanju",
+    CONFIRMED: "Potvrđena",
+    SHIPPED: "Poslata",
+    DELIVERED: "Isporučena",
+    CANCELLED: "Otkazana",
+    PAID: "Plaćeno",
+    FAILED: "Neuspešno",
+    REFUNDED: "Refundirano",
+  };
+  return (
+    <span className="h-fit w-fit rounded-full bg-secondary px-3 py-1 text-xs font-semibold">
+      {labels[value] ?? value}
+    </span>
+  );
+}

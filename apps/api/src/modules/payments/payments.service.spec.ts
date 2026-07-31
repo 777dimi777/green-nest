@@ -17,7 +17,7 @@ describe('PaymentsService status transitions', () => {
           id: 'payment-1',
           orderId: 'order-1',
           userId: 'user-1',
-          method: PaymentMethod.CARD,
+          method: PaymentMethod.CASH_ON_DELIVERY,
           status: PaymentTransactionStatus.FAILED,
           paidAt: null,
           order: {

@@ -13,6 +13,13 @@ export interface ReviewsResponse {
   data: Review[];
   summary: { averageRating: number; totalReviews: number };
 }
-export interface MyReviewResponse { hasReviewed: boolean; review: Review | null }
-export interface CreateReviewRequest { rating: number; title?: string; comment: string }
+export interface MyReviewResponse {
+  hasReviewed: boolean;
+  review: Review | null;
+}
+export interface CreateReviewRequest {
+  rating: number;
+  title?: string;
+  comment: string;
+}
 export type UpdateReviewRequest = Partial<CreateReviewRequest>;

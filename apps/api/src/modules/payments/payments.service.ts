@@ -42,15 +42,10 @@ export class PaymentsService {
   ) {}
 
   async createPayment(userId: string, orderId: string, dto: CreatePaymentDto) {
-    if (
-      dto.method === PaymentMethod.CASH_ON_DELIVERY &&
-      dto.simulateFailure !== undefined
-    ) {
+    if (dto.method !== PaymentMethod.CASH_ON_DELIVERY)
       throw new BadRequestException(
-        'simulateFailure je dozvoljen samo za CARD plaćanje.',
+        'Dostupno je isključivo plaćanje pouzećem.',
       );
-    }
-
     try {
       return await this.runSerializable(async (transaction) => {
         const order = await transaction.order.findFirst({
@@ -69,53 +64,52 @@ export class PaymentsService {
             },
           },
         });
-
-        if (!order) {
-          throw new NotFoundException('Porudžbina nije pronađena.');
-        }
-        if (order.status === OrderStatus.CANCELLED) {
+        if (!order) throw new NotFoundException('Porudžbina nije pronađena.');
+        if (order.status === OrderStatus.CANCELLED)
           throw new BadRequestException(
             'Otkazana porudžbina ne može biti plaćena.',
           );
-        }
-        if (order.paymentStatus === PaymentStatus.PAID) {
+        if (order.paymentStatus === PaymentStatus.PAID)
           throw new ConflictException('Porudžbina je već plaćena.');
-        }
-        if (order.paymentStatus === PaymentStatus.REFUNDED) {
+        if (order.paymentStatus === PaymentStatus.REFUNDED)
           throw new BadRequestException(
             'Refundirana porudžbina ne može biti ponovo plaćena.',
           );
-        }
         if (
           order.payments.some(
-            (payment) => payment.status === PaymentTransactionStatus.COMPLETED,
+            (payment) =>
+              payment.method === PaymentMethod.CASH_ON_DELIVERY &&
+              payment.status === PaymentTransactionStatus.PENDING,
           )
-        ) {
+        )
           throw new ConflictException(
-            'Za porudžbinu već postoji uspešno plaćanje.',
+            'Plaćanje pouzećem već postoji za ovu porudžbinu.',
           );
-        }
-
-        if (order.totalPrice.isZero()) {
-          const payment = await transaction.payment.create({
-            data: {
-              orderId,
-              userId,
-              method: dto.method,
-              status: PaymentTransactionStatus.COMPLETED,
-              amount: order.totalPrice,
-              provider: 'FREE_ORDER',
-              providerTransactionId: `FREE-${randomUUID()}`,
-              paidAt: new Date(),
-            },
-            include: { order: { select: paymentOrderSelect } },
-          });
-
+        if (order.totalPrice.isNegative())
+          throw new BadRequestException(
+            'Iznos porudžbine ne može biti negativan.',
+          );
+        const isFree = order.totalPrice.isZero();
+        const payment = await transaction.payment.create({
+          data: {
+            orderId,
+            userId,
+            method: PaymentMethod.CASH_ON_DELIVERY,
+            status: isFree
+              ? PaymentTransactionStatus.COMPLETED
+              : PaymentTransactionStatus.PENDING,
+            amount: order.totalPrice,
+            provider: isFree ? 'FREE_ORDER' : 'CASH_ON_DELIVERY',
+            providerTransactionId: isFree ? `FREE-${randomUUID()}` : null,
+            paidAt: isFree ? new Date() : null,
+          },
+          include: { order: { select: paymentOrderSelect } },
+        });
+        if (isFree) {
           await transaction.order.update({
             where: { id: orderId },
             data: { paymentStatus: PaymentStatus.PAID },
           });
-
           await this.notificationsService.createPaymentNotification(
             userId,
             orderId,
@@ -125,92 +119,7 @@ export class PaymentsService {
             null,
             transaction,
           );
-
-          return payment;
         }
-
-        if (order.totalPrice.isNegative()) {
-          throw new BadRequestException(
-            'Iznos porudžbine ne može biti negativan.',
-          );
-        }
-
-        if (dto.method === PaymentMethod.CASH_ON_DELIVERY) {
-          if (
-            order.payments.some(
-              (payment) =>
-                payment.method === PaymentMethod.CASH_ON_DELIVERY &&
-                payment.status === PaymentTransactionStatus.PENDING,
-            )
-          ) {
-            throw new ConflictException(
-              'Plaćanje pouzećem već postoji za ovu porudžbinu.',
-            );
-          }
-
-          return transaction.payment.create({
-            data: {
-              orderId,
-              userId,
-              method: PaymentMethod.CASH_ON_DELIVERY,
-              status: PaymentTransactionStatus.PENDING,
-              amount: order.totalPrice,
-              provider: 'CASH_ON_DELIVERY',
-            },
-            include: { order: { select: paymentOrderSelect } },
-          });
-        }
-
-        const failed = dto.simulateFailure === true;
-        const payment = await transaction.payment.create({
-          data: {
-            orderId,
-            userId,
-            method: PaymentMethod.CARD,
-            status: failed
-              ? PaymentTransactionStatus.FAILED
-              : PaymentTransactionStatus.COMPLETED,
-            amount: order.totalPrice,
-            provider: 'MOCK_CARD',
-            providerTransactionId: `MOCK-CARD-${randomUUID()}`,
-            failureReason: failed ? 'Simulated card payment failure.' : null,
-            paidAt: failed ? null : new Date(),
-          },
-          include: { order: { select: paymentOrderSelect } },
-        });
-
-        if (!failed) {
-          await transaction.payment.updateMany({
-            where: {
-              orderId,
-              method: PaymentMethod.CASH_ON_DELIVERY,
-              status: PaymentTransactionStatus.PENDING,
-            },
-            data: {
-              status: PaymentTransactionStatus.FAILED,
-              failureReason:
-                'Plaćanje pouzećem je zatvoreno nakon uspešnog CARD plaćanja.',
-            },
-          });
-
-          await transaction.order.update({
-            where: { id: orderId },
-            data: { paymentStatus: PaymentStatus.PAID },
-          });
-        }
-
-        await this.notificationsService.createPaymentNotification(
-          userId,
-          orderId,
-          payment.id,
-          order.orderNumber,
-          failed
-            ? NotificationType.PAYMENT_FAILED
-            : NotificationType.PAYMENT_COMPLETED,
-          payment.failureReason,
-          transaction,
-        );
-
         return payment;
       });
     } catch (error) {

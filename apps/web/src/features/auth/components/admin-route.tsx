@@ -16,7 +16,11 @@ export function AdminRoute({ children }: { children: React.ReactNode }) {
   }, [isInitializing, router, user]);
 
   if (isInitializing || !user || user.role !== "ADMIN") {
-    return <div className="grid min-h-screen place-items-center"><LoadingSpinner label="Provera administratorskog pristupa" /></div>;
+    return (
+      <div className="grid min-h-screen place-items-center">
+        <LoadingSpinner label="Provera administratorskog pristupa" />
+      </div>
+    );
   }
   return children;
 }

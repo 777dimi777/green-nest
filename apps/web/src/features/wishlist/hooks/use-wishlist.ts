@@ -8,13 +8,31 @@ import { wishlistQueryKeys } from "../queries/wishlist-query-keys";
 
 export function useWishlist() {
   const { isAuthenticated } = useAuth();
-  return useQuery({ queryKey: wishlistQueryKeys.all, queryFn: wishlistApi.get, enabled: isAuthenticated });
+  return useQuery({
+    queryKey: wishlistQueryKeys.all,
+    queryFn: wishlistApi.get,
+    enabled: isAuthenticated,
+  });
 }
 export function useAddToWishlist() {
   const client = useQueryClient();
-  return useMutation({ mutationFn: wishlistApi.add, onSuccess: async () => { toast.success("Proizvod je dodat u listu želja."); await client.invalidateQueries({queryKey:wishlistQueryKeys.all}); }, onError: e => toast.error(getApiErrorMessage(e)) });
+  return useMutation({
+    mutationFn: wishlistApi.add,
+    onSuccess: async () => {
+      toast.success("Proizvod je dodat u listu želja.");
+      await client.invalidateQueries({ queryKey: wishlistQueryKeys.all });
+    },
+    onError: (e) => toast.error(getApiErrorMessage(e)),
+  });
 }
 export function useRemoveFromWishlist() {
   const client = useQueryClient();
-  return useMutation({ mutationFn: wishlistApi.remove, onSuccess: async () => { toast.success("Proizvod je uklonjen iz liste želja."); await client.invalidateQueries({queryKey:wishlistQueryKeys.all}); }, onError: e => toast.error(getApiErrorMessage(e)) });
+  return useMutation({
+    mutationFn: wishlistApi.remove,
+    onSuccess: async () => {
+      toast.success("Proizvod je uklonjen iz liste želja.");
+      await client.invalidateQueries({ queryKey: wishlistQueryKeys.all });
+    },
+    onError: (e) => toast.error(getApiErrorMessage(e)),
+  });
 }

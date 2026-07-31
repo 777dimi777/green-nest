@@ -9,5 +9,9 @@ const subscribe = (callback: () => void) => {
   return () => media.removeEventListener("change", callback);
 };
 export function useMobile() {
-  return useSyncExternalStore(subscribe, () => window.matchMedia(query).matches, () => false);
+  return useSyncExternalStore(
+    subscribe,
+    () => window.matchMedia(query).matches,
+    () => false,
+  );
 }

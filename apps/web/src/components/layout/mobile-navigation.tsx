@@ -36,10 +36,7 @@ export function MobileNavigation() {
           Izaberite stranicu koju želite da posetite.
         </SheetDescription>
         <Logo className="mb-10" />
-        <nav
-          aria-label="Mobilna navigacija"
-          className="flex flex-col gap-2"
-        >
+        <nav aria-label="Mobilna navigacija" className="flex flex-col gap-2">
           {storeNavigation.map((item) => (
             <SheetClose asChild key={item.href}>
               <Link
@@ -53,22 +50,36 @@ export function MobileNavigation() {
         </nav>
         <div className="mt-8 grid gap-3 border-t pt-6">
           <SheetClose asChild>
-            <Link className="text-sm font-medium" href="/lista-zelja">Lista želja</Link>
+            <Link className="text-sm font-medium" href="/lista-zelja">
+              Lista želja
+            </Link>
           </SheetClose>
           <SheetClose asChild>
-            <Link className="text-sm font-medium" href="/korpa">Korpa</Link>
+            <Link className="text-sm font-medium" href="/korpa">
+              Korpa
+            </Link>
           </SheetClose>
-          <SheetClose asChild><Link className="text-sm font-medium" href="/porudzbine">Porudžbine</Link></SheetClose>
-          <SheetClose asChild><Link className="text-sm font-medium" href="/adrese">Adrese</Link></SheetClose>
-          <SheetClose asChild><Link className="text-sm font-medium" href="/notifikacije">Notifikacije</Link></SheetClose>
+          <SheetClose asChild>
+            <Link className="text-sm font-medium" href="/porudzbine">
+              Porudžbine
+            </Link>
+          </SheetClose>
+          <SheetClose asChild>
+            <Link className="text-sm font-medium" href="/adrese">
+              Adrese
+            </Link>
+          </SheetClose>
+          <SheetClose asChild>
+            <Link className="text-sm font-medium" href="/notifikacije">
+              Notifikacije
+            </Link>
+          </SheetClose>
           <SheetClose asChild>
             <Link
               className="text-sm font-medium"
               href={user ? "/nalog" : "/auth/login"}
             >
-              {user
-                ? `Moj nalog — ${user.firstName}`
-                : "Prijavite se na nalog"}
+              {user ? `Moj nalog — ${user.firstName}` : "Prijavite se na nalog"}
             </Link>
           </SheetClose>
           {user?.role === "ADMIN" && (

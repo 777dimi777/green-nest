@@ -83,8 +83,17 @@ async function main() {
   for (const [slug, name, description] of categoryData) {
     const c = await prisma.category.upsert({
       where: { slug },
-      update: { name, description },
-      create: { slug, name, description },
+      update: {
+        name,
+        description,
+        image: `/uploads/seed-categories/${slug}.png`,
+      },
+      create: {
+        slug,
+        name,
+        description,
+        image: `/uploads/seed-categories/${slug}.png`,
+      },
     });
     categories.set(slug, c.id);
   }
@@ -678,7 +687,7 @@ async function main() {
       'GN-PAY-002',
       'GN-SEED-002',
       milos.id,
-      PaymentMethod.CARD,
+      PaymentMethod.CASH_ON_DELIVERY,
       PaymentTransactionStatus.COMPLETED,
       null,
       d(-15),
@@ -687,7 +696,7 @@ async function main() {
       'GN-PAY-003',
       'GN-SEED-003',
       milos.id,
-      PaymentMethod.CARD,
+      PaymentMethod.CASH_ON_DELIVERY,
       PaymentTransactionStatus.COMPLETED,
       null,
       d(-35),
@@ -696,7 +705,7 @@ async function main() {
       'GN-PAY-004',
       'GN-SEED-004',
       milos.id,
-      PaymentMethod.CARD,
+      PaymentMethod.CASH_ON_DELIVERY,
       PaymentTransactionStatus.COMPLETED,
       null,
       d(-65),
@@ -705,7 +714,7 @@ async function main() {
       'GN-PAY-005',
       'GN-SEED-005',
       milos.id,
-      PaymentMethod.CARD,
+      PaymentMethod.CASH_ON_DELIVERY,
       PaymentTransactionStatus.REFUNDED,
       null,
       d(-89),
@@ -723,7 +732,7 @@ async function main() {
       'GN-PAY-007',
       'GN-SEED-007',
       ana.id,
-      PaymentMethod.CARD,
+      PaymentMethod.CASH_ON_DELIVERY,
       PaymentTransactionStatus.COMPLETED,
       null,
       d(-25),
@@ -732,9 +741,9 @@ async function main() {
       'GN-PAY-008',
       'GN-SEED-008',
       ana.id,
-      PaymentMethod.CARD,
+      PaymentMethod.CASH_ON_DELIVERY,
       PaymentTransactionStatus.FAILED,
-      'Simulirano odbijanje kartice',
+      'Neuspešna demo naplata pouzećem',
       null,
     ],
   ] as const;

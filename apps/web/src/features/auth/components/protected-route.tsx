@@ -17,7 +17,11 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   }, [isAuthenticated, isInitializing, pathname, router]);
 
   if (isInitializing || !isAuthenticated) {
-    return <div className="grid min-h-[50vh] place-items-center"><LoadingSpinner label="Provera prijave" /></div>;
+    return (
+      <div className="grid min-h-[50vh] place-items-center">
+        <LoadingSpinner label="Provera prijave" />
+      </div>
+    );
   }
   return children;
 }

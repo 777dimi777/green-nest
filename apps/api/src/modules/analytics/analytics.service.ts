@@ -367,7 +367,7 @@ export class AnalyticsService {
         pending: statusCount(PaymentTransactionStatus.PENDING),
         refunded: statusCount(PaymentTransactionStatus.REFUNDED),
       },
-      methods: Object.values(PaymentMethod).map((method) => {
+      methods: [PaymentMethod.CASH_ON_DELIVERY].map((method) => {
         const methodGroups = groups.filter((group) => group.method === method);
         const countFor = (status: PaymentTransactionStatus) =>
           methodGroups
