@@ -9,14 +9,14 @@ export function Logo({ className }: { className?: string }) {
       aria-label="Green Nest početna"
       className={cn("inline-flex shrink-0 items-center", className)}
     >
-      <span className="relative h-12 w-24 overflow-hidden sm:w-32">
+      <span className="relative h-14 w-24 sm:w-28">
         <Image
-          src="/green-nest-logo.png"
+          src="/green-nest-logo-transparent.png"
           alt="Green Nest"
           fill
           priority
-          sizes="(max-width: 640px) 96px, 128px"
-          className="scale-[1.45] object-contain"
+          sizes="(max-width: 640px) 96px, 112px"
+          className="object-contain"
         />
       </span>
     </Link>

@@ -26,16 +26,16 @@ export const metadata: Metadata = {
     description: "Biljke i oprema za zeleniji dom.",
     images: [
       {
-        url: "/green-nest-logo.png",
-        width: 1456,
-        height: 1082,
+        url: "/green-nest-logo-transparent.png",
+        width: 1229,
+        height: 805,
         alt: "Green Nest",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    images: ["/green-nest-logo.png"],
+    images: ["/green-nest-logo-transparent.png"],
   },
   robots: { index: true, follow: true },
   manifest: "/manifest.webmanifest",
