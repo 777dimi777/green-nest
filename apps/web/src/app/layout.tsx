@@ -24,6 +24,18 @@ export const metadata: Metadata = {
     siteName: "Green Nest",
     title: "Green Nest",
     description: "Biljke i oprema za zeleniji dom.",
+    images: [
+      {
+        url: "/green-nest-logo.png",
+        width: 1456,
+        height: 1082,
+        alt: "Green Nest",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    images: ["/green-nest-logo.png"],
   },
   robots: { index: true, follow: true },
   manifest: "/manifest.webmanifest",

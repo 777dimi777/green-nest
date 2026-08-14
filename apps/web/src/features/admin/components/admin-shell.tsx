@@ -8,11 +8,11 @@ import {
   CreditCard,
   FileBadge,
   FolderTree,
-  Leaf,
   Menu,
   Package,
   UsersRound,
 } from "lucide-react";
+import { Logo } from "@/components/layout/logo";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -102,13 +102,5 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   );
 }
 function Brand() {
-  return (
-    <Link
-      href="/"
-      className="flex items-center gap-2 font-serif text-xl font-bold"
-    >
-      <Leaf className="text-primary" />
-      Green Nest
-    </Link>
-  );
+  return <Logo />;
 }

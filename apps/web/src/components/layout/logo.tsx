@@ -1,5 +1,5 @@
+import Image from "next/image";
 import Link from "next/link";
-import { Leaf } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 
 export function Logo({ className }: { className?: string }) {
@@ -7,16 +7,17 @@ export function Logo({ className }: { className?: string }) {
     <Link
       href="/"
       aria-label="Green Nest početna"
-      className={cn(
-        "inline-flex items-center gap-2 text-foreground",
-        className,
-      )}
+      className={cn("inline-flex shrink-0 items-center", className)}
     >
-      <span className="grid size-9 place-items-center rounded-full bg-primary text-primary-foreground">
-        <Leaf className="size-4" />
-      </span>
-      <span className="font-serif text-2xl font-bold tracking-tight">
-        Green Nest
+      <span className="relative h-12 w-24 overflow-hidden sm:w-32">
+        <Image
+          src="/green-nest-logo.png"
+          alt="Green Nest"
+          fill
+          priority
+          sizes="(max-width: 640px) 96px, 128px"
+          className="scale-[1.45] object-contain"
+        />
       </span>
     </Link>
   );
