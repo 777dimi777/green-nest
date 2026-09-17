@@ -1,1053 +1,424 @@
-import {
-  PrismaClient,
-  UserRole,
-  OrderStatus,
-  PaymentStatus,
-  PaymentMethod,
-  PaymentTransactionStatus,
-  NotificationType,
-  Prisma,
-} from '@prisma/client';
+import { PrismaClient, UserRole, Prisma } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
+
 const prisma = new PrismaClient();
-const d = (days: number) => new Date(Date.now() + days * 86400000);
 const decimal = (value: number) => new Prisma.Decimal(value);
+
+type ProductSeed = {
+  row: number;
+  name: string;
+  latinName: string;
+  plantType: string;
+  height?: string;
+  trunkCircumference?: string;
+  graftHeight?: string;
+  potDiameter?: string;
+  stock: number;
+  price: number;
+  priceNote?: string;
+  imageCount: number;
+};
+
+const products: ProductSeed[] = [
+  {
+    row: 6,
+    name: 'Šarenolisna lovor višnja',
+    latinName: "Prunus laurocerasus 'Marbled White'",
+    plantType: 'Zimzeleni žbun',
+    height: '100–130 cm',
+    stock: 25,
+    price: 1500,
+    imageCount: 3,
+  },
+  {
+    row: 7,
+    name: 'Crvenolisni hrast',
+    latinName: 'Quercus rubra L.',
+    plantType: 'Listopadno drvo',
+    height: '120 cm',
+    stock: 10,
+    price: 500,
+    imageCount: 1,
+  },
+  {
+    row: 8,
+    name: 'Breza',
+    latinName: 'Betula alba',
+    plantType: 'Listopadno drvo',
+    height: '200–350 cm',
+    trunkCircumference: '8–12 cm',
+    stock: 160,
+    price: 1200,
+    priceNote: 'Cena zavisi od dimenzije i kreće se od 1.200 do 1.500 RSD.',
+    imageCount: 3,
+  },
+  {
+    row: 9,
+    name: 'Kuglasta katalpa',
+    latinName: "Catalpa bignonioides 'Nana'",
+    plantType: 'Listopadno drvo',
+    height: '120–240 cm',
+    graftHeight: '100–220 cm',
+    stock: 250,
+    price: 500,
+    priceNote: 'Cena zavisi od dimenzije i kreće se od 500 do 1.200 RSD.',
+    imageCount: 3,
+  },
+  {
+    row: 10,
+    name: 'Katalpa',
+    latinName: 'Catalpa bignonioides',
+    plantType: 'Listopadno drvo',
+    stock: 10,
+    price: 500,
+    imageCount: 3,
+  },
+  {
+    row: 11,
+    name: 'Baštenski hibiskus',
+    latinName: 'Hibiscus syriacus',
+    plantType: 'Listopadni žbun',
+    height: '120 cm',
+    stock: 10,
+    price: 600,
+    imageCount: 1,
+  },
+  {
+    row: 12,
+    name: 'Klen',
+    latinName: 'Acer campestre',
+    plantType: 'Listopadno drvo',
+    height: '200 cm',
+    stock: 0,
+    price: 0,
+    priceNote: 'Cena i dostupnost su na upit.',
+    imageCount: 2,
+  },
+  {
+    row: 13,
+    name: 'Javor mleč Crimson King',
+    latinName: "Acer platanoides 'Crimson King'",
+    plantType: 'Listopadno drvo',
+    graftHeight: '200 cm',
+    stock: 5,
+    price: 1200,
+    imageCount: 3,
+  },
+  {
+    row: 14,
+    name: 'Javor mleč Crimson Sentry',
+    latinName: "Acer platanoides 'Crimson Sentry'",
+    plantType: 'Listopadno drvo',
+    height: '220 cm',
+    stock: 5,
+    price: 1200,
+    imageCount: 3,
+  },
+  {
+    row: 15,
+    name: 'Javor negundo',
+    latinName: "Acer negundo 'Variegatum'",
+    plantType: 'Listopadno drvo',
+    graftHeight: '200 cm',
+    stock: 5,
+    price: 1200,
+    imageCount: 3,
+  },
+  {
+    row: 16,
+    name: 'Japanska trešnja crvenolisna',
+    latinName: "Prunus serrulata 'Royal Burgundy'",
+    plantType: 'Listopadno drvo',
+    graftHeight: '220 cm',
+    stock: 1,
+    price: 1200,
+    imageCount: 2,
+  },
+  {
+    row: 17,
+    name: 'Japanska trešnja padajuća',
+    latinName: "Prunus serrulata 'Kiku-shidare-zakura'",
+    plantType: 'Listopadno drvo',
+    graftHeight: '220 cm',
+    stock: 2,
+    price: 2000,
+    imageCount: 3,
+  },
+  {
+    row: 18,
+    name: 'Japanska trešnja',
+    latinName: "Prunus serrulata 'Kanzan'",
+    plantType: 'Listopadno drvo',
+    graftHeight: '220 cm',
+    stock: 1,
+    price: 1200,
+    imageCount: 2,
+  },
+  {
+    row: 19,
+    name: 'Padajući dud',
+    latinName: "Morus alba 'Pendula'",
+    plantType: 'Listopadno drvo',
+    graftHeight: '180–200 cm',
+    stock: 10,
+    price: 1200,
+    imageCount: 2,
+  },
+  {
+    row: 20,
+    name: 'Platan',
+    latinName: 'Platanus × acerifolia',
+    plantType: 'Listopadno drvo',
+    graftHeight: '220 cm',
+    stock: 50,
+    price: 1000,
+    imageCount: 2,
+  },
+  {
+    row: 22,
+    name: 'Fotinija žbun',
+    latinName: "Photinia × fraseri 'Red Robin'",
+    plantType: 'Zimzeleni žbun',
+    height: '140 cm',
+    stock: 15,
+    price: 1000,
+    imageCount: 3,
+  },
+  {
+    row: 23,
+    name: 'Fotinija na štapu',
+    latinName: "Photinia × fraseri 'Red Robin'",
+    plantType: 'Zimzeleno drvo',
+    graftHeight: '150–200 cm',
+    stock: 5,
+    price: 1500,
+    imageCount: 2,
+  },
+  {
+    row: 24,
+    name: 'Likvidambar',
+    latinName: 'Liquidambar styraciflua',
+    plantType: 'Listopadno drvo',
+    graftHeight: '180–200 cm',
+    stock: 100,
+    price: 1000,
+    imageCount: 2,
+  },
+  {
+    row: 25,
+    name: 'Crni bor',
+    latinName: 'Pinus nigra',
+    plantType: 'Četinar',
+    height: '50–70 cm',
+    potDiameter: 'Ø 19 cm',
+    stock: 500,
+    price: 700,
+    imageCount: 2,
+  },
+  {
+    row: 26,
+    name: 'Kuglasti bor',
+    latinName: "Pinus nigra 'Brepo'",
+    plantType: 'Četinar',
+    graftHeight: '30–50 cm',
+    potDiameter: 'Ø 22 cm',
+    stock: 70,
+    price: 2400,
+    imageCount: 2,
+  },
+  {
+    row: 27,
+    name: 'Padajući bor',
+    latinName: "Pinus strobus 'Pendula'",
+    plantType: 'Četinar',
+    height: '50 cm',
+    potDiameter: 'Ø 22 cm',
+    stock: 3,
+    price: 2400,
+    imageCount: 2,
+  },
+  {
+    row: 28,
+    name: 'Stubasti beli bor',
+    latinName: "Pinus sylvestris 'Fastigiata'",
+    plantType: 'Četinar',
+    height: '20–40 cm',
+    potDiameter: 'Ø 22 cm',
+    stock: 15,
+    price: 2400,
+    imageCount: 2,
+  },
+  {
+    row: 29,
+    name: 'Bor Winter Gold',
+    latinName: "Pinus mugo 'Winter Gold'",
+    plantType: 'Četinar',
+    height: '20 cm',
+    potDiameter: 'Ø 22 cm',
+    stock: 3,
+    price: 2400,
+    imageCount: 2,
+  },
+  {
+    row: 30,
+    name: 'Japanski javor padajući',
+    latinName: "Acer palmatum dissectum 'Atropurpureum'",
+    plantType: 'Listopadno drvo',
+    height: '40–50 cm',
+    potDiameter: 'Ø 15 cm',
+    stock: 5,
+    price: 2000,
+    imageCount: 2,
+  },
+  {
+    row: 31,
+    name: 'Japanski javor crveni',
+    latinName: "Acer palmatum 'Atropurpureum'",
+    plantType: 'Listopadno drvo',
+    height: '20–50 cm',
+    potDiameter: 'Ø 15 cm',
+    stock: 5,
+    price: 2000,
+    imageCount: 2,
+  },
+  {
+    row: 32,
+    name: 'Žuti berberis',
+    latinName: "Berberis thunbergii 'Maria'",
+    plantType: 'Listopadni žbun',
+    height: '25 cm',
+    potDiameter: 'Ø 13 cm',
+    stock: 100,
+    price: 120,
+    imageCount: 2,
+  },
+  {
+    row: 33,
+    name: 'Crveni berberis',
+    latinName: 'Berberis thunbergii atropurpurea',
+    plantType: 'Listopadni žbun',
+    height: '30–40 cm',
+    potDiameter: 'Ø 13 cm',
+    stock: 50,
+    price: 80,
+    imageCount: 2,
+  },
+];
+
+const slugify = (value: string) =>
+  value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'dj')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+const categorySlug = (type: string) => slugify(type);
+
+async function clearOldCatalog() {
+  await prisma.$transaction([
+    prisma.notification.deleteMany(),
+    prisma.payment.deleteMany(),
+    prisma.couponUsage.deleteMany(),
+    prisma.orderItem.deleteMany(),
+    prisma.order.deleteMany(),
+    prisma.review.deleteMany(),
+    prisma.wishlist.deleteMany(),
+    prisma.cartItem.deleteMany(),
+    prisma.cart.deleteMany(),
+    prisma.productImage.deleteMany(),
+    prisma.product.deleteMany(),
+    prisma.category.deleteMany(),
+    prisma.coupon.deleteMany(),
+  ]);
+}
+
 async function main() {
   const production = process.env.NODE_ENV === 'production';
   const adminPassword =
     process.env.SEED_ADMIN_PASSWORD ?? (production ? null : 'Admin123!');
-  const userPassword =
-    process.env.SEED_USER_PASSWORD ?? (production ? null : 'User123!');
-  if (!adminPassword || !userPassword) {
-    throw new Error(
-      'Production seed requires SEED_ADMIN_PASSWORD and SEED_USER_PASSWORD.',
-    );
-  }
-  const [adminHash, userHash] = await Promise.all([
-    bcrypt.hash(adminPassword, 10),
-    bcrypt.hash(userPassword, 10),
-  ]);
-  const users = await Promise.all(
-    [
-      ['admin@greennest.test', 'Green', 'Admin', UserRole.ADMIN, adminHash],
-      [
-        'milos@greennest.test',
-        'Miloš',
-        'Dimitrijević',
-        UserRole.CUSTOMER,
-        userHash,
-      ],
-      ['ana@greennest.test', 'Ana', 'Petrović', UserRole.CUSTOMER, userHash],
-      ['novi@greennest.test', 'Novi', 'Korisnik', UserRole.CUSTOMER, userHash],
-    ].map(async ([email, firstName, lastName, role, password]) =>
-      prisma.user.upsert({
-        where: { email: email },
-        update: {
-          firstName: firstName,
-          lastName: lastName,
-          role: role as UserRole,
-          password: password,
-          isVerified: true,
-        },
-        create: {
-          email: email,
-          firstName: firstName,
-          lastName: lastName,
-          role: role as UserRole,
-          password: password,
-          isVerified: true,
-        },
-      }),
-    ),
-  );
-  const [admin, milos, ana] = users;
-  const categoryData = [
-    [
-      'sobne-biljke',
-      'Sobne biljke',
-      'Dekorativne biljke prilagođene životu u zatvorenom prostoru.',
-    ],
-    [
-      'sukulenti',
-      'Sukulenti',
-      'Otporne biljke koje skladište vodu i traže malo nege.',
-    ],
-    ['kaktusi', 'Kaktusi', 'Kaktusi različitih oblika za sunčane položaje.'],
-    [
-      'saksije',
-      'Saksije',
-      'Funkcionalne i ukrasne saksije za svaki enterijer.',
-    ],
-    [
-      'zemlja-i-prihrana',
-      'Zemlja i prihrana',
-      'Supstrati i hraniva za zdrav rast biljaka.',
-    ],
-    [
-      'bastenski-dodaci',
-      'Baštenski dodaci',
-      'Praktičan alat i oprema za negu i presađivanje.',
-    ],
-  ] as const;
-  const categories = new Map<string, string>();
-  for (const [slug, name, description] of categoryData) {
-    const c = await prisma.category.upsert({
-      where: { slug },
-      update: {
-        name,
-        description,
-        image: `/uploads/seed-categories/${slug}.png`,
-      },
-      create: {
-        slug,
-        name,
-        description,
-        image: `/uploads/seed-categories/${slug}.png`,
-      },
-    });
-    categories.set(slug, c.id);
-  }
-  const productData = [
-    [
-      'monstera-deliciosa',
-      'Monstera Deliciosa',
-      'GN-PLANT-001',
-      3490,
-      null,
-      28,
-      true,
-      true,
-      'sobne-biljke',
-    ],
-    [
-      'ficus-lyrata',
-      'Ficus Lyrata',
-      'GN-PLANT-002',
-      5990,
-      5290,
-      8,
-      true,
-      true,
-      'sobne-biljke',
-    ],
-    [
-      'zamioculcas',
-      'Zamioculcas',
-      'GN-PLANT-003',
-      2890,
-      null,
-      32,
-      true,
-      false,
-      'sobne-biljke',
-    ],
-    [
-      'sansevieria-laurentii',
-      'Sansevieria Laurentii',
-      'GN-PLANT-004',
-      2590,
-      2190,
-      2,
-      true,
-      true,
-      'sobne-biljke',
-    ],
-    [
-      'pothos-golden',
-      'Pothos Golden',
-      'GN-PLANT-005',
-      1790,
-      null,
-      24,
-      true,
-      false,
-      'sobne-biljke',
-    ],
-    [
-      'calathea-orbifolia',
-      'Calathea Orbifolia',
-      'GN-PLANT-006',
-      3990,
-      3490,
-      0,
-      true,
-      false,
-      'sobne-biljke',
-    ],
-    [
-      'aloe-vera',
-      'Aloe Vera',
-      'GN-SUCC-001',
-      990,
-      null,
-      40,
-      true,
-      false,
-      'sukulenti',
-    ],
-    [
-      'echeveria-elegans',
-      'Echeveria Elegans',
-      'GN-SUCC-002',
-      690,
-      590,
-      3,
-      true,
-      false,
-      'sukulenti',
-    ],
-    [
-      'haworthia-zebra',
-      'Haworthia Zebra',
-      'GN-SUCC-003',
-      790,
-      null,
-      18,
-      true,
-      false,
-      'sukulenti',
-    ],
-    [
-      'kaktus-golden-barrel',
-      'Kaktus Golden Barrel',
-      'GN-CACT-001',
-      1490,
-      1290,
-      12,
-      true,
-      false,
-      'kaktusi',
-    ],
-    [
-      'kaktus-bunny-ears',
-      'Kaktus Bunny Ears',
-      'GN-CACT-002',
-      1190,
-      null,
-      0,
-      true,
-      false,
-      'kaktusi',
-    ],
-    [
-      'keramicka-saksija-nordic',
-      'Keramička saksija Nordic',
-      'GN-POT-001',
-      1890,
-      null,
-      30,
-      true,
-      true,
-      'saksije',
-    ],
-    [
-      'viseca-saksija-terra',
-      'Viseća saksija Terra',
-      'GN-POT-002',
-      2290,
-      1990,
-      14,
-      true,
-      false,
-      'saksije',
-    ],
-    [
-      'organska-zemlja-za-sobne-biljke-10l',
-      'Organska zemlja za sobne biljke 10L',
-      'GN-SOIL-001',
-      850,
-      null,
-      50,
-      true,
-      false,
-      'zemlja-i-prihrana',
-    ],
-    [
-      'prihrana-za-zelene-biljke',
-      'Prihrana za zelene biljke',
-      'GN-SOIL-002',
-      490,
-      null,
-      35,
-      true,
-      false,
-      'zemlja-i-prihrana',
-    ],
-    [
-      'set-za-presadjivanje-biljaka',
-      'Kompletan set za presađivanje biljaka sa ručnim alatom',
-      'GN-ACC-001',
-      2490,
-      null,
-      16,
-      false,
-      false,
-      'bastenski-dodaci',
-    ],
-    [
-      'premium-ukrasna-saksija-stone',
-      'Premium ukrasna saksija Stone',
-      'GN-POT-003',
-      8990,
-      null,
-      6,
-      false,
-      false,
-      'saksije',
-    ],
-    [
-      'test-neobjavljen-proizvod',
-      'Test neobjavljen proizvod',
-      'GN-TEST-001',
-      100,
-      null,
-      10,
-      false,
-      false,
-      'bastenski-dodaci',
-    ],
-  ] as const;
-  const products = new Map<string, { id: string; price: Prisma.Decimal }>();
-  for (const [
-    slug,
-    name,
-    sku,
-    price,
-    discountPrice,
-    stock,
-    published,
-    featured,
-    category,
-  ] of productData) {
-    const data = {
-      name,
-      slug,
-      sku,
-      description: `${name} je pažljivo odabran Green Nest proizvod sa jasnim uputstvom za upotrebu i negu.`,
-      price: decimal(price),
-      discountPrice: discountPrice === null ? null : decimal(discountPrice),
-      stock,
-      published,
-      featured,
-      categoryId: categories.get(category)!,
-      ...(category.includes('biljke') ||
-      category === 'sukulenti' ||
-      category === 'kaktusi'
-        ? {
-            light: 'Svetlo mesto bez jakog podnevnog sunca',
-            watering: 'Zaliti kada se gornji sloj zemlje osuši',
-            difficulty: 'Lako do srednje',
-            petFriendly: false,
-            airPurifying: true,
-          }
-        : {}),
-    };
-    const existing = await prisma.product.findFirst({
-      where: { OR: [{ sku }, { slug }] },
-    });
-    const p = existing
-      ? await prisma.product.update({ where: { id: existing.id }, data })
-      : await prisma.product.create({ data });
-    products.set(slug, { id: p.id, price: p.discountPrice ?? p.price });
-    const galleryCount = [
-      'monstera-deliciosa',
-      'ficus-lyrata',
-      'sansevieria-laurentii',
-      'aloe-vera',
-      'kaktus-golden-barrel',
-      'keramicka-saksija-nordic',
-    ].includes(slug)
-      ? 2
-      : 1;
-    const imageUrls = Array.from(
-      { length: galleryCount },
-      (_, index) => `/uploads/seed-products/${slug}-${index + 1}.png`,
-    );
-    const seedImages = await prisma.productImage.findMany({
-      where: {
-        productId: p.id,
-        url: { startsWith: '/uploads/seed-products/' },
-      },
-    });
-    const manualPrimary = await prisma.productImage.findFirst({
-      where: {
-        productId: p.id,
-        isPrimary: true,
-        url: { not: { startsWith: '/uploads/seed-products/' } },
-      },
-    });
-    for (const image of seedImages.filter(
-      (item) => !imageUrls.includes(item.url),
-    ))
-      await prisma.productImage.delete({ where: { id: image.id } });
-    for (const [index, url] of imageUrls.entries()) {
-      const image = await prisma.productImage.findFirst({
-        where: { productId: p.id, url },
-      });
-      const imageData = {
-        url,
-        alt: `${name} — fotografija ${index + 1}`,
-        isPrimary: !manualPrimary && index === 0,
-      };
-      if (image)
-        await prisma.productImage.update({
-          where: { id: image.id },
-          data: imageData,
-        });
-      else
-        await prisma.productImage.create({
-          data: { ...imageData, productId: p.id },
-        });
-    }
-  }
-  const addressData = [
-    [
-      milos.id,
-      'Miloš',
-      'Dimitrijević',
-      '+381641112233',
-      'Srbija',
-      'Niš',
-      '18000',
-      'Ulica Nikole Pašića',
-      '10',
-      true,
-    ],
-    [
-      milos.id,
-      'Miloš',
-      'Dimitrijević',
-      '+381641112233',
-      'Srbija',
-      'Bor',
-      '19210',
-      'Moše Pijade',
-      '20',
-      false,
-    ],
-    [
-      ana.id,
-      'Ana',
-      'Petrović',
-      '+381642223344',
-      'Srbija',
-      'Beograd',
-      '11000',
-      'Kralja Petra',
-      '25',
-      true,
-    ],
-  ] as const;
-  for (const [
-    userId,
-    firstName,
-    lastName,
-    phone,
-    country,
-    city,
-    postalCode,
-    street,
-    streetNumber,
-    isDefault,
-  ] of addressData) {
-    const existing = await prisma.address.findFirst({
-      where: { userId, street, streetNumber },
-    });
-    const data = {
-      firstName,
-      lastName,
-      phone,
-      country,
-      city,
-      postalCode,
-      street,
-      streetNumber,
-      isDefault,
-    };
-    if (existing)
-      await prisma.address.update({ where: { id: existing.id }, data });
-    else await prisma.address.create({ data: { ...data, userId } });
-  }
-  const coupons = [
-    {
-      code: 'WELCOME10',
-      description: '10% popusta za dobrodošlicu',
-      percentage: 10,
-      minimumOrder: decimal(1500),
-      active: true,
-      startsAt: d(-1),
-      expiresAt: d(30),
+  if (!adminPassword)
+    throw new Error('Production seed requires SEED_ADMIN_PASSWORD.');
+
+  await clearOldCatalog();
+  const password = await bcrypt.hash(adminPassword, 10);
+  await prisma.user.upsert({
+    where: { email: 'admin@greennest.test' },
+    update: {
+      firstName: 'Green',
+      lastName: 'Admin',
+      role: UserRole.ADMIN,
+      password,
+      isVerified: true,
     },
-    {
-      code: 'SAVE500',
-      description: '500 RSD popusta',
-      fixedAmount: decimal(500),
-      minimumOrder: decimal(3000),
-      active: true,
-      startsAt: d(-1),
-      expiresAt: d(30),
-    },
-    {
-      code: 'EXPIRED20',
-      description: 'Istekao kupon',
-      percentage: 20,
-      active: true,
-      startsAt: d(-30),
-      expiresAt: d(-3),
-    },
-    {
-      code: 'INACTIVE15',
-      description: 'Neaktivan kupon',
-      percentage: 15,
-      active: false,
-      startsAt: d(-1),
-      expiresAt: d(30),
-    },
-    {
-      code: 'LIMIT1',
-      description: 'Kupon sa jednim korišćenjem',
-      percentage: 5,
-      usageLimit: 1,
-      usedCount: 1,
-      active: true,
-      startsAt: d(-1),
-      expiresAt: d(30),
-    },
-    {
-      code: 'MINIMUM',
-      description: 'Visok minimalni iznos',
-      percentage: 12,
-      minimumOrder: decimal(50000),
-      active: true,
-      startsAt: d(-1),
-      expiresAt: d(30),
-    },
-  ];
-  const couponMap = new Map<string, string>();
-  for (const data of coupons) {
-    const c = await prisma.coupon.upsert({
-      where: { code: data.code },
-      update: data,
-      create: data,
-    });
-    couponMap.set(c.code, c.id);
-  }
-  const address = {
-    shippingFirstName: 'Miloš',
-    shippingLastName: 'Dimitrijević',
-    shippingPhone: '+381641112233',
-    shippingCountry: 'Srbija',
-    shippingCity: 'Niš',
-    shippingPostalCode: '18000',
-    shippingStreet: 'Ulica Nikole Pašića',
-    shippingStreetNumber: '10',
-    shippingApartment: null,
-  };
-  const specs = [
-    [
-      'GN-SEED-001',
-      milos.id,
-      OrderStatus.PENDING,
-      PaymentStatus.PENDING,
-      -5,
-      null,
-      [['monstera-deliciosa', 1]],
-    ],
-    [
-      'GN-SEED-002',
-      milos.id,
-      OrderStatus.CONFIRMED,
-      PaymentStatus.PAID,
-      -15,
-      null,
-      [
-        ['sansevieria-laurentii', 1],
-        ['organska-zemlja-za-sobne-biljke-10l', 2],
-      ],
-    ],
-    [
-      'GN-SEED-003',
-      milos.id,
-      OrderStatus.SHIPPED,
-      PaymentStatus.PAID,
-      -35,
-      null,
-      [['ficus-lyrata', 1]],
-    ],
-    [
-      'GN-SEED-004',
-      milos.id,
-      OrderStatus.DELIVERED,
-      PaymentStatus.PAID,
-      -65,
-      'WELCOME10',
-      [
-        ['zamioculcas', 1],
-        ['keramicka-saksija-nordic', 1],
-      ],
-    ],
-    [
-      'GN-SEED-005',
-      milos.id,
-      OrderStatus.CANCELLED,
-      PaymentStatus.REFUNDED,
-      -90,
-      null,
-      [['pothos-golden', 1]],
-    ],
-    [
-      'GN-SEED-006',
-      milos.id,
-      OrderStatus.DELIVERED,
-      PaymentStatus.PAID,
-      -120,
-      'SAVE500',
-      [
-        ['aloe-vera', 2],
-        ['prihrana-za-zelene-biljke', 1],
-      ],
-    ],
-    [
-      'GN-SEED-007',
-      ana.id,
-      OrderStatus.DELIVERED,
-      PaymentStatus.PAID,
-      -25,
-      null,
-      [
-        ['echeveria-elegans', 1],
-        ['viseca-saksija-terra', 1],
-      ],
-    ],
-    [
-      'GN-SEED-008',
-      ana.id,
-      OrderStatus.PENDING,
-      PaymentStatus.FAILED,
-      -2,
-      null,
-      [['kaktus-golden-barrel', 1]],
-    ],
-  ] as const;
-  const orderMap = new Map<string, string>();
-  for (const [
-    number,
-    userId,
-    status,
-    paymentStatus,
-    days,
-    couponCode,
-    items,
-  ] of specs) {
-    const itemData = items.map(([slug, quantity]) => ({
-      productId: products.get(String(slug))!.id,
-      quantity: Number(quantity),
-      price: products.get(String(slug))!.price,
-    }));
-    const subtotal = itemData.reduce(
-      (sum, item) => sum + Number(item.price) * item.quantity,
-      0,
-    );
-    const shipping = subtotal >= 5000 ? 0 : 390;
-    const discount =
-      couponCode === 'WELCOME10'
-        ? subtotal * 0.1
-        : couponCode === 'SAVE500'
-          ? 500
-          : 0;
-    const data = {
-      status,
-      paymentStatus,
-      subtotal: decimal(subtotal),
-      shippingPrice: decimal(shipping),
-      discount: decimal(discount),
-      totalPrice: decimal(subtotal + shipping - discount),
-      userId,
-      couponId: couponCode ? couponMap.get(couponCode) : null,
-      createdAt: d(days),
-      ...address,
-    };
-    const existing = await prisma.order.findUnique({
-      where: { orderNumber: number },
-    });
-    let order: { id: string };
-    if (existing) {
-      order = await prisma.order.update({
-        where: { id: existing.id },
-        data: { ...data, items: { deleteMany: {}, create: itemData } },
-      });
-    } else {
-      order = await prisma.order.create({
-        data: { orderNumber: number, ...data, items: { create: itemData } },
-      });
-    }
-    orderMap.set(String(number), order.id);
-  }
-  const payments = [
-    [
-      'GN-PAY-001',
-      'GN-SEED-001',
-      milos.id,
-      PaymentMethod.CASH_ON_DELIVERY,
-      PaymentTransactionStatus.PENDING,
-      null,
-      null,
-    ],
-    [
-      'GN-PAY-002',
-      'GN-SEED-002',
-      milos.id,
-      PaymentMethod.CASH_ON_DELIVERY,
-      PaymentTransactionStatus.COMPLETED,
-      null,
-      d(-15),
-    ],
-    [
-      'GN-PAY-003',
-      'GN-SEED-003',
-      milos.id,
-      PaymentMethod.CASH_ON_DELIVERY,
-      PaymentTransactionStatus.COMPLETED,
-      null,
-      d(-35),
-    ],
-    [
-      'GN-PAY-004',
-      'GN-SEED-004',
-      milos.id,
-      PaymentMethod.CASH_ON_DELIVERY,
-      PaymentTransactionStatus.COMPLETED,
-      null,
-      d(-65),
-    ],
-    [
-      'GN-PAY-005',
-      'GN-SEED-005',
-      milos.id,
-      PaymentMethod.CASH_ON_DELIVERY,
-      PaymentTransactionStatus.REFUNDED,
-      null,
-      d(-89),
-    ],
-    [
-      'GN-PAY-006',
-      'GN-SEED-006',
-      milos.id,
-      PaymentMethod.CASH_ON_DELIVERY,
-      PaymentTransactionStatus.COMPLETED,
-      null,
-      d(-120),
-    ],
-    [
-      'GN-PAY-007',
-      'GN-SEED-007',
-      ana.id,
-      PaymentMethod.CASH_ON_DELIVERY,
-      PaymentTransactionStatus.COMPLETED,
-      null,
-      d(-25),
-    ],
-    [
-      'GN-PAY-008',
-      'GN-SEED-008',
-      ana.id,
-      PaymentMethod.CASH_ON_DELIVERY,
-      PaymentTransactionStatus.FAILED,
-      'Neuspešna demo naplata pouzećem',
-      null,
-    ],
-  ] as const;
-  const paymentMap = new Map<string, string>();
-  for (const [
-    ref,
-    orderNumber,
-    userId,
-    method,
-    status,
-    failureReason,
-    paidAt,
-  ] of payments) {
-    const order = await prisma.order.findUniqueOrThrow({
-      where: { orderNumber },
-    });
-    const p = await prisma.payment.upsert({
-      where: { providerTransactionId: ref },
-      update: {
-        orderId: order.id,
-        userId,
-        method,
-        status,
-        amount: order.totalPrice,
-        provider: 'GREEN_NEST_MOCK',
-        failureReason,
-        paidAt,
-      },
-      create: {
-        providerTransactionId: ref,
-        orderId: order.id,
-        userId,
-        method,
-        status,
-        amount: order.totalPrice,
-        provider: 'GREEN_NEST_MOCK',
-        failureReason,
-        paidAt,
-      },
-    });
-    paymentMap.set(ref, p.id);
-  }
-  const reviewData = [
-    [
-      milos,
-      'monstera-deliciosa',
-      5,
-      'Odlična biljka',
-      'Stigla je zdrava i lepo upakovana.',
-    ],
-    [milos, 'zamioculcas', 4, 'Laka za negu', 'Odličan izbor za kancelariju.'],
-    [
-      milos,
-      'pothos-golden',
-      3,
-      'Dobar proizvod',
-      'Biljka je dobra, saksija je mogla biti veća.',
-    ],
-    [milos, 'aloe-vera', 5, 'Preporuka', 'Veoma zdrava i lepa biljka.'],
-    [ana, 'echeveria-elegans', 5, 'Prelepa', 'Izgleda još lepše uživo.'],
-    [
-      ana,
-      'viseca-saksija-terra',
-      4,
-      'Kvalitetna saksija',
-      'Čvrsta i lepo obrađena.',
-    ],
-    [
-      ana,
-      'kaktus-golden-barrel',
-      2,
-      'Manji nego očekivano',
-      'Kvalitetan, ali dimenzije treba pažljivo pročitati.',
-    ],
-    [
-      ana,
-      'ficus-lyrata',
-      4,
-      'Dekorativan',
-      'Lep veliki list i dobro pakovanje.',
-    ],
-    [
-      milos,
-      'keramicka-saksija-nordic',
-      1,
-      'Oštećenje u transportu',
-      'Podrška je brzo rešila reklamaciju.',
-    ],
-    [
-      ana,
-      'prihrana-za-zelene-biljke',
-      5,
-      'Praktična',
-      'Jednostavna za doziranje i biljke lepo reaguju.',
-    ],
-  ] as const;
-  for (const [user, slug, rating, title, comment] of reviewData)
-    await prisma.review.upsert({
-      where: {
-        userId_productId: {
-          userId: user.id,
-          productId: products.get(String(slug))!.id,
-        },
-      },
-      update: { rating, title, comment },
-      create: {
-        userId: user.id,
-        productId: products.get(String(slug))!.id,
-        rating,
-        title,
-        comment,
-      },
-    });
-  for (const [user, slugs] of [
-    [
-      milos,
-      ['ficus-lyrata', 'calathea-orbifolia', 'premium-ukrasna-saksija-stone'],
-    ],
-    [ana, ['monstera-deliciosa', 'haworthia-zebra']],
-  ] as const)
-    for (const slug of slugs)
-      await prisma.wishlist.upsert({
-        where: {
-          userId_productId: {
-            userId: user.id,
-            productId: products.get(String(slug))!.id,
-          },
-        },
-        update: {},
-        create: { userId: user.id, productId: products.get(String(slug))!.id },
-      });
-  for (const [user, items] of [
-    [
-      milos,
-      [
-        ['monstera-deliciosa', 1],
-        ['zamioculcas', 2],
-      ],
-    ],
-    [ana, [['aloe-vera', 1]]],
-  ] as const) {
-    const cart = await prisma.cart.upsert({
-      where: { userId: user.id },
-      update: {},
-      create: { userId: user.id },
-    });
-    await prisma.cartItem.deleteMany({ where: { cartId: cart.id } });
-    await prisma.cartItem.createMany({
-      data: items.map(([slug, quantity]) => ({
-        cartId: cart.id,
-        productId: products.get(String(slug))!.id,
-        quantity: Number(quantity),
-      })),
-    });
-  }
-  const notices = [
-    [
-      milos,
-      NotificationType.ORDER_CREATED,
-      'Seed: Porudžbina kreirana',
-      'Porudžbina GN-SEED-001 je primljena.',
-      false,
-      'GN-SEED-001',
-      null,
-    ],
-    [
-      milos,
-      NotificationType.ORDER_CONFIRMED,
-      'Seed: Porudžbina potvrđena',
-      'Porudžbina GN-SEED-002 je potvrđena.',
-      true,
-      'GN-SEED-002',
-      null,
-    ],
-    [
-      milos,
-      NotificationType.ORDER_SHIPPED,
-      'Seed: Paket poslat',
-      'Porudžbina GN-SEED-003 je poslata.',
-      false,
-      'GN-SEED-003',
-      null,
-    ],
-    [
-      milos,
-      NotificationType.ORDER_DELIVERED,
-      'Seed: Paket dostavljen',
-      'Porudžbina GN-SEED-004 je dostavljena.',
-      true,
-      'GN-SEED-004',
-      null,
-    ],
-    [
-      milos,
-      NotificationType.PAYMENT_COMPLETED,
-      'Seed: Plaćanje uspešno',
-      'Plaćanje za GN-SEED-004 je uspešno.',
-      false,
-      'GN-SEED-004',
-      'GN-PAY-004',
-    ],
-    [
-      milos,
-      NotificationType.PAYMENT_REFUNDED,
-      'Seed: Novac refundiran',
-      'Plaćanje za GN-SEED-005 je refundirano.',
-      true,
-      'GN-SEED-005',
-      'GN-PAY-005',
-    ],
-    [
-      ana,
-      NotificationType.ORDER_CREATED,
-      'Seed: Ana porudžbina',
-      'Porudžbina GN-SEED-008 je primljena.',
-      false,
-      'GN-SEED-008',
-      null,
-    ],
-    [
-      ana,
-      NotificationType.PAYMENT_FAILED,
-      'Seed: Plaćanje odbijeno',
-      'Kartično plaćanje nije uspelo.',
-      false,
-      'GN-SEED-008',
-      'GN-PAY-008',
-    ],
-    [
-      ana,
-      NotificationType.ORDER_DELIVERED,
-      'Seed: Ana dostava',
-      'Porudžbina GN-SEED-007 je dostavljena.',
-      true,
-      'GN-SEED-007',
-      null,
-    ],
-    [
-      ana,
-      NotificationType.GENERAL,
-      'Seed: Savet za negu',
-      'Proverite vlažnost zemlje pre zalivanja.',
-      false,
-      null,
-      null,
-    ],
-    [
-      admin,
-      NotificationType.GENERAL,
-      'Seed: Admin pregled',
-      'Razvojni seed je uspešno pripremljen.',
-      false,
-      null,
-      null,
-    ],
-    [
-      admin,
-      NotificationType.PAYMENT_FAILED,
-      'Seed: Neuspešno plaćanje',
-      'GN-SEED-008 zahteva proveru.',
-      true,
-      'GN-SEED-008',
-      'GN-PAY-008',
-    ],
-  ] as const;
-  await prisma.notification.deleteMany({
-    where: {
-      title: { startsWith: 'Seed:' },
-      userId: { in: [admin.id, milos.id, ana.id] },
+    create: {
+      email: 'admin@greennest.test',
+      firstName: 'Green',
+      lastName: 'Admin',
+      role: UserRole.ADMIN,
+      password,
+      isVerified: true,
     },
   });
-  for (const [
-    user,
-    type,
-    title,
-    message,
-    read,
-    orderNumber,
-    paymentRef,
-  ] of notices)
-    await prisma.notification.create({
+
+  const categories = new Map<string, string>();
+  for (const type of [
+    ...new Set(products.map((product) => product.plantType)),
+  ]) {
+    const slug = categorySlug(type);
+    const first = products.find((product) => product.plantType === type)!;
+    const category = await prisma.category.create({
       data: {
-        userId: user.id,
-        type,
-        title,
-        message,
-        read,
-        readAt: read ? new Date() : null,
-        orderId: orderNumber ? orderMap.get(orderNumber) : null,
-        paymentId: paymentRef ? paymentMap.get(paymentRef) : null,
+        name: type,
+        slug,
+        description: `Ponuda iz rasadnika: ${type.toLocaleLowerCase('sr-RS')}.`,
+        image: `/uploads/seed-products/red-${first.row}-1.webp`,
       },
     });
-  console.log('Green Nest development seed completed.');
+    categories.set(type, category.id);
+  }
+
+  for (const [index, product] of products.entries()) {
+    const slug = slugify(product.name);
+    const description = [
+      `${product.name} (${product.latinName}) iz aktuelne ponude rasadnika.`,
+      product.priceNote,
+    ]
+      .filter(Boolean)
+      .join(' ');
+    await prisma.product.create({
+      data: {
+        name: product.name,
+        slug,
+        description,
+        sku: `RAS-${String(product.row).padStart(3, '0')}`,
+        price: decimal(product.price),
+        stock: product.stock,
+        latinName: product.latinName,
+        plantType: product.plantType,
+        height: product.height,
+        trunkCircumference: product.trunkCircumference,
+        graftHeight: product.graftHeight,
+        potDiameter: product.potDiameter,
+        featured: index < 8,
+        published: true,
+        categoryId: categories.get(product.plantType)!,
+        images: {
+          create: Array.from(
+            { length: product.imageCount },
+            (_, imageIndex) => ({
+              url: `/uploads/seed-products/red-${product.row}-${imageIndex + 1}.webp`,
+              alt: `${product.name} — fotografija ${imageIndex + 1}`,
+              isPrimary: imageIndex === 0,
+            }),
+          ),
+        },
+      },
+    });
+  }
+  console.log(`Rasadnik katalog je pripremljen: ${products.length} proizvoda.`);
 }
+
 main()
   .catch((error) => {
     console.error(error);

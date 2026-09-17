@@ -25,3 +25,5 @@ services:
         sync: false
       - key: SWAGGER_ENABLED
         value: "false"
+      - key: SEED_ADMIN_PASSWORD
+        sync: false

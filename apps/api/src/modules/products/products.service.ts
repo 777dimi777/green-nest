@@ -41,20 +41,12 @@ export class ProductsService {
         discountPrice: createProductDto.discountPrice,
         stock: createProductDto.stock ?? 0,
 
+        latinName: createProductDto.latinName,
+        plantType: createProductDto.plantType,
         height: createProductDto.height,
-        potSize: createProductDto.potSize,
-        light: createProductDto.light,
-        watering: createProductDto.watering,
-        temperature: createProductDto.temperature,
-        humidity: createProductDto.humidity,
-        difficulty: createProductDto.difficulty,
-        growthRate: createProductDto.growthRate,
-        origin: createProductDto.origin,
-        toxicity: createProductDto.toxicity,
-
-        airPurifying: createProductDto.airPurifying ?? false,
-
-        petFriendly: createProductDto.petFriendly ?? true,
+        trunkCircumference: createProductDto.trunkCircumference,
+        graftHeight: createProductDto.graftHeight,
+        potDiameter: createProductDto.potDiameter,
 
         featured: createProductDto.featured ?? false,
 

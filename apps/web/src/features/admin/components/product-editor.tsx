@@ -23,40 +23,30 @@ const schema = z.object({
   name: z.string().min(2).max(150),
   description: z.string().min(10).max(5000),
   sku: z.string().min(1).max(50),
-  price: z.coerce.number().positive(),
+  price: z.coerce.number().nonnegative(),
   discountPrice: z
     .union([z.coerce.number().positive(), z.literal("")])
     .optional(),
   stock: z.coerce.number().int().min(0),
   categoryId: z.string().min(1),
+  latinName: z.string().min(2).max(200),
+  plantType: z.string().min(2).max(100),
   height: optionalText,
-  potSize: optionalText,
-  light: optionalText,
-  watering: optionalText,
-  temperature: optionalText,
-  humidity: optionalText,
-  difficulty: optionalText,
-  growthRate: optionalText,
-  origin: optionalText,
-  toxicity: optionalText,
-  airPurifying: z.boolean(),
-  petFriendly: z.boolean(),
+  trunkCircumference: optionalText,
+  graftHeight: optionalText,
+  potDiameter: optionalText,
   featured: z.boolean(),
   published: z.boolean(),
 });
 type InputValues = z.input<typeof schema>;
 type Values = z.output<typeof schema>;
 const details = [
-  ["height", "Visina"],
-  ["potSize", "Veličina saksije"],
-  ["light", "Svetlost"],
-  ["watering", "Zalivanje"],
-  ["temperature", "Temperatura"],
-  ["humidity", "Vlažnost"],
-  ["difficulty", "Težina nege"],
-  ["growthRate", "Brzina rasta"],
-  ["origin", "Poreklo"],
-  ["toxicity", "Toksičnost"],
+  ["latinName", "Latinski naziv"],
+  ["plantType", "Tip biljke"],
+  ["height", "Visina (cm)"],
+  ["trunkCircumference", "Obim stabla (cm)"],
+  ["graftHeight", "Visina kalema / krošnje (cm)"],
+  ["potDiameter", "Prečnik saksije (Ø)"],
 ] as const;
 
 export function ProductEditor({ id }: { id?: string }) {
@@ -139,18 +129,12 @@ function ProductForm({ product }: { product?: ProductDetails }) {
         : "",
       stock: product?.stock ?? 0,
       categoryId: product?.categoryId ?? "",
+      latinName: product?.latinName ?? "",
+      plantType: product?.plantType ?? "",
       height: product?.height ?? "",
-      potSize: product?.potSize ?? "",
-      light: product?.light ?? "",
-      watering: product?.watering ?? "",
-      temperature: product?.temperature ?? "",
-      humidity: product?.humidity ?? "",
-      difficulty: product?.difficulty ?? "",
-      growthRate: product?.growthRate ?? "",
-      origin: product?.origin ?? "",
-      toxicity: product?.toxicity ?? "",
-      airPurifying: product?.airPurifying ?? false,
-      petFriendly: product?.petFriendly ?? true,
+      trunkCircumference: product?.trunkCircumference ?? "",
+      graftHeight: product?.graftHeight ?? "",
+      potDiameter: product?.potDiameter ?? "",
       featured: product?.featured ?? false,
       published: product?.published ?? true,
     },
@@ -240,15 +224,11 @@ function ProductForm({ product }: { product?: ProductDetails }) {
           <Field key={name} name={name} label={label} register={register} />
         ))}
         <div className="flex flex-wrap gap-5 sm:col-span-2">
-          {(
-            ["airPurifying", "petFriendly", "featured", "published"] as const
-          ).map((name) => (
+          {(["featured", "published"] as const).map((name) => (
             <label key={name} className="flex items-center gap-2">
               <input type="checkbox" {...register(name)} />
               {
                 {
-                  airPurifying: "Prečišćava vazduh",
-                  petFriendly: "Pet friendly",
                   featured: "Izdvojen",
                   published: "Objavljen",
                 }[name]

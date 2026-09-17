@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, Check } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { ErrorState } from "@/components/common/error-state";
 import { LoadingSpinner } from "@/components/common/loading-spinner";
 import { buttonVariants } from "@/components/ui/button";
@@ -38,12 +38,13 @@ export function ProductDetailsView({ slug }: { slug: string }) {
               ? "Proizvod ne postoji ili više nije objavljen."
               : getApiErrorMessage(productQuery.error)
           }
-          onRetry={
-            notFound ? undefined : () => void productQuery.refetch()
-          }
+          onRetry={notFound ? undefined : () => void productQuery.refetch()}
         />
         <div className="mt-5 text-center">
-          <Link href="/prodavnica" className={buttonVariants({ variant: "outline" })}>
+          <Link
+            href="/prodavnica"
+            className={buttonVariants({ variant: "outline" })}
+          >
             <ArrowLeft />
             Nazad u prodavnicu
           </Link>
@@ -55,24 +56,24 @@ export function ProductDetailsView({ slug }: { slug: string }) {
   const product = productQuery.data;
   const activePrice = product.discountPrice ?? product.price;
   const details = [
+    ["Latinski naziv", product.latinName],
+    ["Tip", product.plantType],
     ["Visina", product.height],
-    ["Veličina saksije", product.potSize],
-    ["Svetlost", product.light],
-    ["Zalivanje", product.watering],
-    ["Temperatura", product.temperature],
-    ["Vlažnost", product.humidity],
-    ["Težina nege", product.difficulty],
-    ["Brzina rasta", product.growthRate],
-    ["Poreklo", product.origin],
-    ["Toksičnost", product.toxicity],
+    ["Obim stabla", product.trunkCircumference],
+    ["Visina kalema / krošnje", product.graftHeight],
+    ["Prečnik saksije", product.potDiameter],
   ].filter((detail): detail is [string, string] => Boolean(detail[1]));
 
   return (
     <>
       <nav aria-label="Putanja" className="mb-8 text-sm text-muted-foreground">
-        <Link href="/" className="hover:text-foreground">Početna</Link>
+        <Link href="/" className="hover:text-foreground">
+          Početna
+        </Link>
         <span aria-hidden="true"> / </span>
-        <Link href="/prodavnica" className="hover:text-foreground">Prodavnica</Link>
+        <Link href="/prodavnica" className="hover:text-foreground">
+          Prodavnica
+        </Link>
         <span aria-hidden="true"> / </span>
         <span aria-current="page">{product.name}</span>
       </nav>
@@ -89,8 +90,12 @@ export function ProductDetailsView({ slug }: { slug: string }) {
             {product.name}
           </h1>
           <div className="mt-5 flex items-end gap-3">
-            <p className="text-3xl font-semibold">{formatCurrency(activePrice)}</p>
-            {product.discountPrice && (
+            <p className="text-3xl font-semibold">
+              {Number(activePrice) > 0
+                ? formatCurrency(activePrice)
+                : "Cena na upit"}
+            </p>
+            {Number(activePrice) > 0 && product.discountPrice && (
               <p className="pb-1 text-muted-foreground line-through">
                 {formatCurrency(product.price)}
               </p>
@@ -103,18 +108,6 @@ export function ProductDetailsView({ slug }: { slug: string }) {
           <div className="flex flex-wrap items-end gap-3">
             <AddToCartControl productId={product.id} stock={product.stock} />
             <WishlistButton productId={product.id} className="mb-0" />
-          </div>
-          <div className="mt-8 flex flex-wrap gap-3 text-sm text-muted-foreground">
-            {product.airPurifying && (
-              <span className="inline-flex items-center gap-2 rounded-full bg-secondary px-3 py-1.5">
-                <Check className="size-4" /> Prečišćava vazduh
-              </span>
-            )}
-            {product.petFriendly && (
-              <span className="inline-flex items-center gap-2 rounded-full bg-secondary px-3 py-1.5">
-                <Check className="size-4" /> Pogodno za dom sa ljubimcima
-              </span>
-            )}
           </div>
           {details.length > 0 && (
             <dl className="mt-10 grid grid-cols-2 gap-x-5 gap-y-4 border-t pt-8">
@@ -130,7 +123,10 @@ export function ProductDetailsView({ slug }: { slug: string }) {
           )}
         </div>
       </div>
-      <ProductReviewsSection productId={product.id} productSlug={product.slug} />
+      <ProductReviewsSection
+        productId={product.id}
+        productSlug={product.slug}
+      />
     </>
   );
 }

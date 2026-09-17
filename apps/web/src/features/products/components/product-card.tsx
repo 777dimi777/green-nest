@@ -41,14 +41,20 @@ export function ProductCard({ product }: { product: ProductListItem }) {
           </p>
           <div className="mt-5 flex items-end justify-between gap-3">
             <div>
-              {product.discountPrice && (
-                <p className="text-xs text-muted-foreground line-through">
-                  {formatCurrency(product.price)}
-                </p>
+              {Number(activePrice) > 0 ? (
+                <>
+                  {product.discountPrice && (
+                    <p className="text-xs text-muted-foreground line-through">
+                      {formatCurrency(product.price)}
+                    </p>
+                  )}
+                  <p className="text-lg font-semibold">
+                    {formatCurrency(activePrice)}
+                  </p>
+                </>
+              ) : (
+                <p className="text-lg font-semibold">Cena na upit</p>
               )}
-              <p className="text-lg font-semibold">
-                {formatCurrency(activePrice)}
-              </p>
             </div>
             <span className="grid size-9 place-items-center rounded-full bg-secondary text-secondary-foreground transition group-hover:bg-primary group-hover:text-primary-foreground">
               <ArrowUpRight className="size-4" />
@@ -56,7 +62,10 @@ export function ProductCard({ product }: { product: ProductListItem }) {
           </div>
         </CardContent>
       </Link>
-      <WishlistButton productId={product.id} className="absolute right-3 top-3 z-10 bg-background/90" />
+      <WishlistButton
+        productId={product.id}
+        className="absolute right-3 top-3 z-10 bg-background/90"
+      />
     </Card>
   );
 }

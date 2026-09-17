@@ -61,7 +61,7 @@ export class CreateProductDto {
   @IsNumber({
     maxDecimalPlaces: 2,
   })
-  @IsPositive()
+  @Min(0)
   price!: number;
 
   @ApiPropertyOptional({
@@ -89,113 +89,47 @@ export class CreateProductDto {
   @Min(0)
   stock?: number;
 
-  @ApiPropertyOptional({
-    example: '60–80 cm',
-    description: 'Visina biljke',
+  @ApiProperty({
+    example: 'Prunus laurocerasus',
+    description: 'Latinski naziv',
   })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(200)
+  latinName!: string;
+
+  @ApiProperty({ example: 'Zimzeleni žbun', description: 'Tip biljke' })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(100)
+  plantType!: string;
+
+  @ApiPropertyOptional({ example: '100–130 cm', description: 'Visina biljke' })
   @IsOptional()
   @IsString()
   @MaxLength(100)
   height?: string;
 
+  @ApiPropertyOptional({ example: '8–12 cm', description: 'Obim stabla' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  trunkCircumference?: string;
+
   @ApiPropertyOptional({
-    example: '17 cm',
-    description: 'Veličina saksije',
+    example: '180–200 cm',
+    description: 'Visina kalema ili krošnje',
   })
   @IsOptional()
   @IsString()
   @MaxLength(100)
-  potSize?: string;
+  graftHeight?: string;
 
-  @ApiPropertyOptional({
-    example: 'Indirektna svetlost',
-    description: 'Preporučeni uslovi osvetljenja',
-  })
-  @IsOptional()
-  @IsString()
-  @MaxLength(200)
-  light?: string;
-
-  @ApiPropertyOptional({
-    example: 'Jednom nedeljno',
-    description: 'Preporuka za zalivanje',
-  })
-  @IsOptional()
-  @IsString()
-  @MaxLength(200)
-  watering?: string;
-
-  @ApiPropertyOptional({
-    example: '18–27 °C',
-    description: 'Preporučena temperatura',
-  })
+  @ApiPropertyOptional({ example: 'Ø 22 cm', description: 'Prečnik saksije' })
   @IsOptional()
   @IsString()
   @MaxLength(100)
-  temperature?: string;
-
-  @ApiPropertyOptional({
-    example: 'Srednja do visoka',
-    description: 'Preporučena vlažnost vazduha',
-  })
-  @IsOptional()
-  @IsString()
-  @MaxLength(100)
-  humidity?: string;
-
-  @ApiPropertyOptional({
-    example: 'Lako',
-    description: 'Nivo zahtevnosti održavanja',
-  })
-  @IsOptional()
-  @IsString()
-  @MaxLength(100)
-  difficulty?: string;
-
-  @ApiPropertyOptional({
-    example: 'Brz',
-    description: 'Brzina rasta biljke',
-  })
-  @IsOptional()
-  @IsString()
-  @MaxLength(100)
-  growthRate?: string;
-
-  @ApiPropertyOptional({
-    example: 'Centralna Amerika',
-    description: 'Poreklo biljke',
-  })
-  @IsOptional()
-  @IsString()
-  @MaxLength(150)
-  origin?: string;
-
-  @ApiPropertyOptional({
-    example: 'Otrovna ako se proguta',
-    description: 'Informacije o toksičnosti',
-  })
-  @IsOptional()
-  @IsString()
-  @MaxLength(300)
-  toxicity?: string;
-
-  @ApiPropertyOptional({
-    example: true,
-    description: 'Da li biljka prečišćava vazduh',
-    default: false,
-  })
-  @IsOptional()
-  @IsBoolean()
-  airPurifying?: boolean;
-
-  @ApiPropertyOptional({
-    example: false,
-    description: 'Da li je biljka bezbedna za kućne ljubimce',
-    default: true,
-  })
-  @IsOptional()
-  @IsBoolean()
-  petFriendly?: boolean;
+  potDiameter?: string;
 
   @ApiPropertyOptional({
     example: true,

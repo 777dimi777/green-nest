@@ -106,18 +106,12 @@ model Product {
   discountPrice Decimal? @db.Decimal(10, 2)
   stock         Int      @default(0)
 
-  height       String?
-  potSize      String?
-  light        String?
-  watering     String?
-  temperature  String?
-  humidity     String?
-  difficulty   String?
-  growthRate   String?
-  origin       String?
-  toxicity     String?
-  airPurifying Boolean @default(false)
-  petFriendly  Boolean @default(true)
+  latinName          String
+  plantType          String
+  height             String?
+  trunkCircumference String?
+  graftHeight        String?
+  potDiameter        String?
 
   featured  Boolean @default(false)
   published Boolean @default(true)

@@ -1,0 +1,25 @@
+diff --git a/apps/api/prisma/schema.prisma b/apps/api/prisma/schema.prisma
+--- a/apps/api/prisma/schema.prisma
++++ b/apps/api/prisma/schema.prisma
+@@ -73,14 +73,8 @@ model Product {
+-  height       String?
+-  potSize      String?
+-  light        String?
+-  watering     String?
+-  temperature  String?
+-  humidity     String?
+-  difficulty   String?
+-  growthRate   String?
+-  origin       String?
+-  toxicity     String?
+-  airPurifying Boolean @default(false)
+-  petFriendly  Boolean @default(true)
++  latinName          String
++  plantType          String
++  height             String?
++  trunkCircumference String?
++  graftHeight        String?
++  potDiameter        String?
+ 
+   featured  Boolean @default(false)
+   published Boolean @default(true)
