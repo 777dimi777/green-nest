@@ -340,6 +340,18 @@ async function main() {
   if (!adminPassword)
     throw new Error('Production seed requires SEED_ADMIN_PASSWORD.');
 
+  // Render's free plan has no Shell, so the seed runs during deploy. Keep
+  // later deploys safe once the complete rasadnik catalog is already present.
+  if (production) {
+    const currentCatalog = await prisma.product.count({
+      where: { latinName: { not: '' } },
+    });
+    if (currentCatalog >= products.length) {
+      console.log(`Katalog već postoji (${currentCatalog} proizvoda); seed preskočen.`);
+      return;
+    }
+  }
+
   await clearOldCatalog();
   const password = await bcrypt.hash(adminPassword, 10);
   await prisma.user.upsert({
