@@ -135,7 +135,7 @@ export default function HomePage() {
           <SectionHeading
             eyebrow="Pronađite svoj izbor"
             title="Kolekcije za svaki prostor"
-            description="Stvarne kategorije iz Green Nest kataloga."
+            description="Stvarne kategorije iz Pro Graft kataloga."
           />
           <div className="mt-10">
             <HomeCategoriesPreview />
@@ -148,7 +148,7 @@ export default function HomePage() {
           <div className="overflow-hidden rounded-[2rem] bg-primary px-6 py-12 text-primary-foreground sm:px-12 lg:px-16">
             <div className="max-w-2xl">
               <div className="mb-5 flex items-center gap-2 text-sm font-medium opacity-85">
-                <BadgeCheck className="size-4" /> Green Nest beleške
+                <BadgeCheck className="size-4" /> Pro Graft beleške
               </div>
               <h2 className="font-serif text-4xl font-semibold sm:text-5xl">
                 Malo više zelenog u vašem inboxu.

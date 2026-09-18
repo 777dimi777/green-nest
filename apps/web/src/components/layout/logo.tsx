@@ -6,13 +6,13 @@ export function Logo({ className }: { className?: string }) {
   return (
     <Link
       href="/"
-      aria-label="Green Nest početna"
+      aria-label="Pro Graft početna"
       className={cn("inline-flex shrink-0 items-center", className)}
     >
       <span className="relative h-14 w-24 sm:w-28">
         <Image
-          src="/green-nest-logo-transparent.png"
-          alt="Green Nest"
+          src="/pro-graft-logo.png"
+          alt="Pro Graft"
           fill
           priority
           sizes="(max-width: 640px) 96px, 112px"

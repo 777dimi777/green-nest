@@ -1,8 +1,8 @@
 import type { MetadataRoute } from "next";
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Green Nest",
-    short_name: "Green Nest",
+    name: "Pro Graft",
+    short_name: "Pro Graft",
     description: "Online prodavnica ukrasnih biljaka i opreme za negu.",
     start_url: "/",
     display: "standalone",

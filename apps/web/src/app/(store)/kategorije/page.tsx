@@ -4,7 +4,7 @@ import { CategoriesGrid } from "@/features/categories/components/categories-grid
 export const metadata = {
   title: "Kategorije",
   description:
-    "Pregledajte Green Nest kategorije biljaka i pronađite izbor za svoj prostor.",
+    "Pregledajte Pro Graft kategorije biljaka i pronađite izbor za svoj prostor.",
 };
 
 export default function CategoriesPage() {
@@ -17,7 +17,7 @@ export default function CategoriesPage() {
         Kategorije biljaka
       </h1>
       <p className="mb-10 mt-5 max-w-2xl text-lg leading-8 text-muted-foreground">
-        Istražite stvarne kategorije iz Green Nest kataloga i otvorite ponudu
+        Istražite stvarne kategorije iz Pro Graft kataloga i otvorite ponudu
         koja najbolje odgovara vašem domu.
       </p>
       <CategoriesGrid />

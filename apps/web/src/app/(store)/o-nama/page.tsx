@@ -15,7 +15,7 @@ import { buttonVariants } from "@/components/ui/button";
 export const metadata = {
   title: "O nama",
   description:
-    "Upoznajte Green Nest iz Kruševca — biljke, praktični saveti i podrška za zeleniji dom.",
+    "Upoznajte Pro Graft iz Kruševca — biljke, praktični saveti i podrška za zeleniji dom.",
 };
 const values = [
   [
@@ -61,13 +61,13 @@ export default function AboutPage() {
         <PageContainer className="relative grid gap-12 py-20 lg:grid-cols-2 lg:items-center lg:py-28">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[.24em] text-primary">
-              Green Nest · Kruševac
+              Pro Graft · Kruševac
             </p>
             <h1 className="mt-4 font-serif text-5xl font-semibold leading-tight sm:text-6xl">
               Pomažemo da biljke postanu deo doma, a ne još jedna obaveza.
             </h1>
             <p className="mt-7 max-w-2xl text-lg leading-8 text-muted-foreground">
-              Green Nest je nastao u Kruševcu iz ljubavi prema biljkama i želje
+              Pro Graft je nastao u Kruševcu iz ljubavi prema biljkama i želje
               da kupovina bude jednostavna, iskrena i korisna. Biramo biljke i
               opremu za negu, objašnjavamo šta im zaista treba i ostajemo
               dostupni kada stignu u vaš dom.
@@ -131,7 +131,7 @@ export default function AboutPage() {
             </h2>
             <p className="mt-5 leading-7 text-muted-foreground">
               Odavde pripremamo porudžbine, odgovaramo na pitanja i gradimo
-              Green Nest ponudu. Za izbor biljke ili postojeću porudžbinu
+              Pro Graft ponudu. Za izbor biljke ili postojeću porudžbinu
               kontaktirajte Jovana.
             </p>
             <div className="mt-7 space-y-4 rounded-2xl border bg-card p-6">
@@ -157,7 +157,7 @@ export default function AboutPage() {
           </div>
           <div className="overflow-hidden rounded-2xl border bg-card shadow-sm">
             <iframe
-              title="Green Nest — Kruševac na mapi"
+              title="Pro Graft — Kruševac na mapi"
               src="https://www.openstreetmap.org/export/embed.html?bbox=21.286%2C43.548%2C21.365%2C43.612&layer=mapnik&marker=43.583%2C21.326"
               className="h-[420px] w-full"
               loading="lazy"

@@ -13,29 +13,29 @@ const cormorant = Cormorant_Garamond({
 
 export const metadata: Metadata = {
   metadataBase: new URL(env.appUrl),
-  title: { default: "Green Nest", template: "%s | Green Nest" },
+  title: { default: "Pro Graft", template: "%s | Pro Graft" },
   description:
     "Online prodavnica ukrasnih biljaka, saksija i opreme za negu biljaka.",
-  applicationName: "Green Nest",
+  applicationName: "Pro Graft",
   keywords: ["ukrasne biljke", "sobne biljke", "saksije", "nega biljaka"],
   openGraph: {
     type: "website",
     locale: "sr_RS",
-    siteName: "Green Nest",
-    title: "Green Nest",
+    siteName: "Pro Graft",
+    title: "Pro Graft",
     description: "Biljke i oprema za zeleniji dom.",
     images: [
       {
-        url: "/green-nest-logo-transparent.png",
+        url: "/pro-graft-logo.png",
         width: 1229,
         height: 805,
-        alt: "Green Nest",
+        alt: "Pro Graft",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    images: ["/green-nest-logo-transparent.png"],
+    images: ["/pro-graft-logo.png"],
   },
   robots: { index: true, follow: true },
   manifest: "/manifest.webmanifest",

@@ -45,8 +45,8 @@ async function bootstrap() {
 
   if (configService.get<string>('SWAGGER_ENABLED') === 'true') {
     const config = new DocumentBuilder()
-      .setTitle('Green Nest API')
-      .setDescription('Backend API for Green Nest e-commerce')
+      .setTitle('Pro Graft API')
+      .setDescription('Backend API for Pro Graft e-commerce')
       .setVersion('1.0.0')
       .addBearerAuth()
       .build();

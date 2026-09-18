@@ -48,7 +48,7 @@ export function Footer() {
       <PageContainer>
         <Separator />
         <p className="py-6 text-sm text-muted-foreground">
-          © {new Date().getFullYear()} Green Nest. Sva prava zadržana.
+          © {new Date().getFullYear()} Pro Graft. Sva prava zadržana.
         </p>
       </PageContainer>
     </footer>

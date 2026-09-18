@@ -23,7 +23,7 @@ export default function AuthLayout({
           <span className="grid size-9 place-items-center rounded-full bg-primary text-primary-foreground">
             <Leaf className="size-4" />
           </span>
-          Green Nest
+          Pro Graft
         </Link>
         {children}
       </div>

@@ -18,7 +18,7 @@ export default function AccountPage() {
     <ProtectedRoute>
       <PageContainer className="py-16 sm:py-20">
         <p className="text-sm font-medium text-primary">
-          Vaš Green Nest prostor
+          Vaš Pro Graft prostor
         </p>
         <h1 className="mt-2 font-serif text-5xl font-semibold">Moj nalog</h1>
         {user && (

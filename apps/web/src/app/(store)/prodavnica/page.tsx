@@ -6,14 +6,14 @@ import { ShopCatalog } from "@/features/products/components/shop-catalog";
 export const metadata = {
   title: "Prodavnica",
   description:
-    "Istražite Green Nest ponudu ukrasnih biljaka i pronađite pravi izbor za svoj prostor.",
+    "Istražite Pro Graft ponudu ukrasnih biljaka i pronađite pravi izbor za svoj prostor.",
 };
 
 export default function ShopPage() {
   return (
     <PageContainer className="py-14 sm:py-20">
       <p className="text-xs font-semibold uppercase tracking-[.2em] text-primary">
-        Green Nest katalog
+        Pro Graft katalog
       </p>
       <h1 className="mt-3 font-serif text-5xl font-semibold sm:text-6xl">
         Biljke za svaki kutak.

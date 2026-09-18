@@ -5,7 +5,7 @@ export class CreatePaymentDto {
   @ApiProperty({
     enum: [PaymentMethod.CASH_ON_DELIVERY],
     example: PaymentMethod.CASH_ON_DELIVERY,
-    description: 'Green Nest prihvata isključivo plaćanje pouzećem.',
+    description: 'Pro Graft prihvata isključivo plaćanje pouzećem.',
   })
   @Equals(PaymentMethod.CASH_ON_DELIVERY)
   method!: PaymentMethod;
