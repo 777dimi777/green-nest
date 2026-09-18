@@ -1,6 +1,12 @@
 import type { MetadataRoute } from "next";
 import { env } from "@/lib/env";
 
+// Do not call the free Render API while Vercel is building. Render may be
+// asleep and take over a minute to wake, which makes Next retry and fail the
+// production build. The sitemap is generated when requested instead.
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 type Product = { slug: string; updatedAt?: string };
 type Response = { data: Product[] };
 
